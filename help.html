@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual de Ayuda — Sistema Carteras de Mora</title>
+<style>
+  :root {
+    --azul:       #003366;
+    --azul-med:   #0055a5;
+    --azul-claro: #e8f0fb;
+    --verde:      #1a7a4a;
+    --naranja:    #d4600a;
+    --gris-borde: #dde3ee;
+    --gris-fondo: #f4f6fa;
+    --texto:      #1a1f2e;
+    --texto-sec:  #4a5568;
+    --blanco:     #ffffff;
+    --sidebar-w:  270px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--gris-fondo);
+    color: var(--texto);
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ── SIDEBAR ── */
+  aside {
+    width: var(--sidebar-w);
+    background: var(--azul);
+    color: #fff;
+    position: fixed;
+    top: 0; left: 0;
+    height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+  }
+
+  .sidebar-header {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+  }
+
+  .sidebar-header .logo-text {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 6px;
+  }
+
+  .sidebar-header h2 {
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #fff;
+  }
+
+  .sidebar-header .version {
+    margin-top: 6px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+  }
+
+  nav { padding: 12px 0; flex: 1; }
+
+  nav .section-label {
+    padding: 14px 20px 5px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+    color: rgba(255,255,255,0.4);
+    font-weight: 600;
+  }
+
+  nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 20px;
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    font-size: 13.5px;
+    border-left: 3px solid transparent;
+    transition: all .18s;
+  }
+
+  nav a:hover, nav a.active {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border-left-color: #6eb3ff;
+  }
+
+  nav a .icon { font-size: 15px; width: 20px; text-align: center; }
+
+  .sidebar-footer {
+    padding: 16px 20px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    line-height: 1.6;
+  }
+
+  /* ── MAIN ── */
+  main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    padding: 0;
+    min-height: 100vh;
+  }
+
+  .page-header {
+    background: var(--blanco);
+    border-bottom: 1px solid var(--gris-borde);
+    padding: 28px 48px 22px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .page-header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--azul);
+  }
+
+  .page-header p {
+    font-size: 13px;
+    color: var(--texto-sec);
+    margin-top: 4px;
+  }
+
+  .breadcrumb {
+    font-size: 12px;
+    color: var(--texto-sec);
+    margin-bottom: 6px;
+  }
+
+  .breadcrumb a { color: var(--azul-med); text-decoration: none; }
+
+  /* ── CONTENT ── */
+  .content {
+    padding: 36px 48px 60px;
+    max-width: 980px;
+  }
+
+  section { margin-bottom: 56px; }
+
+  section h2 {
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--azul);
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--azul-claro);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  section h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--azul-med);
+    margin: 24px 0 10px;
+  }
+
+  section h4 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--texto);
+    margin: 16px 0 6px;
+  }
+
+  p { font-size: 14px; line-height: 1.75; color: var(--texto-sec); margin-bottom: 10px; }
+
+  ul, ol { padding-left: 22px; margin-bottom: 12px; }
+  li { font-size: 14px; line-height: 1.8; color: var(--texto-sec); }
+  li strong { color: var(--texto); }
+
+  /* ── CARDS ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .card {
+    background: var(--blanco);
+    border: 1px solid var(--gris-borde);
+    border-radius: 10px;
+    padding: 18px 20px;
+    transition: box-shadow .2s;
+  }
+
+  .card:hover { box-shadow: 0 4px 16px rgba(0,51,102,.08); }
+
+  .card .card-icon {
+    font-size: 24px;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .card h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--azul);
+    margin-bottom: 6px;
+  }
+
+  .card p { font-size: 13px; margin: 0; }
+
+  /* ── STEPS ── */
+  .steps { counter-reset: steps; }
+
+  .step {
+    display: flex;
+    gap: 18px;
+    margin-bottom: 18px;
+    align-items: flex-start;
+  }
+
+  .step-num {
+    counter-increment: steps;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    background: var(--azul);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+
+  .step-body h4 { margin-top: 0; }
+
+  /* ── CODE BLOCK ── */
+  .code-block {
+    background: #1e2433;
+    color: #c9d1e0;
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-family: 'Consolas', 'Cascadia Code', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    margin: 10px 0 16px;
+    overflow-x: auto;
+    position: relative;
+  }
+
+  .code-block .comment { color: #6272a4; }
+  .code-block .kw      { color: #6eb3ff; }
+  .code-block .str     { color: #f1fa8c; }
+  .code-block .fn      { color: #50fa7b; }
+
+  /* ── TABLE ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 20px;
+    font-size: 13.5px;
+  }
+
+  th {
+    background: var(--azul);
+    color: #fff;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+  }
+
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--gris-borde);
+    color: var(--texto-sec);
+    vertical-align: top;
+  }
+
+  tr:nth-child(even) td { background: var(--gris-fondo); }
+  tr:hover td { background: var(--azul-claro); }
+
+  /* ── BADGE ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .badge-azul    { background: #dbeafe; color: #1d4ed8; }
+  .badge-verde   { background: #dcfce7; color: #15803d; }
+  .badge-naranja { background: #ffedd5; color: #c2410c; }
+  .badge-rojo    { background: #fee2e2; color: #dc2626; }
+  .badge-gris    { background: #f3f4f6; color: #374151; }
+
+  /* ── ALERT ── */
+  .alert {
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 12px 0;
+    font-size: 13.5px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .alert-info  { background: #eff6ff; border-left: 4px solid #3b82f6; color: #1e40af; }
+  .alert-warn  { background: #fffbeb; border-left: 4px solid #f59e0b; color: #92400e; }
+  .alert-ok    { background: #f0fdf4; border-left: 4px solid #22c55e; color: #15803d; }
+
+  .alert-icon { font-size: 18px; margin-top: 1px; }
+
+  /* ── FOLDER TREE ── */
+  .tree {
+    background: var(--blanco);
+    border: 1px solid var(--gris-borde);
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-family: monospace;
+    font-size: 13px;
+    line-height: 1.9;
+    color: var(--texto);
+  }
+
+  .tree .folder { color: var(--azul-med); font-weight: 700; }
+  .tree .file   { color: var(--texto-sec); }
+  .tree .note   { color: #999; font-style: italic; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    aside { width: 100%; height: auto; position: relative; }
+    main  { margin-left: 0; }
+    .content { padding: 24px 20px 40px; }
+    .page-header { padding: 20px 20px 16px; }
+  }
+
+  /* ── SCROLL OFFSET ── */
+  :target { scroll-margin-top: 100px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<aside>
+  <div class="sidebar-header">
+    <div class="logo-text">Municipalidad de San Pedro Sula</div>
+    <h2>Sistema de Carteras de Mora</h2>
+    <div class="version">Manual de Usuario · v1.0 · 2025</div>
+  </div>
+
+  <nav>
+    <div class="section-label">Introducción</div>
+    <a href="#descripcion"   class="active"><span class="icon">📋</span> Descripción general</a>
+    <a href="#requisitos">            <span class="icon">⚙️</span> Requisitos del sistema</a>
+    <a href="#estructura">            <span class="icon">📁</span> Estructura del proyecto</a>
+
+    <div class="section-label">Instalación</div>
+    <a href="#instalacion">           <span class="icon">🚀</span> Instalación inicial</a>
+    <a href="#configuracion">         <span class="icon">🔧</span> Configuración</a>
+
+    <div class="section-label">Uso del sistema</div>
+    <a href="#menu">                  <span class="icon">🗂️</span> Menú principal (MENU.bat)</a>
+    <a href="#procesar">              <span class="icon">⚡</span> Procesar carteras</a>
+    <a href="#verificar">             <span class="icon">✅</span> Verificar base de datos</a>
+    <a href="#exportar">              <span class="icon">📊</span> Exportar a Excel</a>
+    <a href="#actualizar">            <span class="icon">🔄</span> Actualizar dashboard</a>
+    <a href="#github">                <span class="icon">🐙</span> GitHub / Publicación web</a>
+
+    <div class="section-label">Datos y normalización</div>
+    <a href="#carteras">              <span class="icon">📂</span> Las 7 carteras</a>
+    <a href="#normalizacion">         <span class="icon">🔤</span> Reglas de normalización</a>
+    <a href="#catastral">             <span class="icon">🗺️</span> Clave catastral</a>
+    <a href="#vistas">                <span class="icon">🔍</span> Vistas SQL del dashboard</a>
+
+    <div class="section-label">Dashboard</div>
+    <a href="#dashboard-uso">         <span class="icon">📈</span> Uso del dashboard</a>
+    <a href="#kpis">                  <span class="icon">💡</span> KPIs y métricas</a>
+
+    <div class="section-label">Soporte</div>
+    <a href="#faq">                   <span class="icon">❓</span> Preguntas frecuentes</a>
+    <a href="#errores">               <span class="icon">🛠️</span> Solución de errores</a>
+  </nav>
+
+  <div class="sidebar-footer">
+    Sistema de Carteras de Mora<br>
+    Municipalidad de San Pedro Sula<br>
+    Desarrollado con Python · SQLite · HTML5
+  </div>
+</aside>
+
+<!-- ══════════════ MAIN ══════════════ -->
+<main>
+  <div class="page-header">
+    <div class="breadcrumb"><a href="#">Inicio</a> › Manual de Ayuda</div>
+    <h1>📖 Manual del Sistema de Carteras de Mora</h1>
+    <p>Guía completa de instalación, configuración, uso y mantenimiento · Versión 1.0 · 2025</p>
+  </div>
+
+  <div class="content">
+
+    <!-- ── DESCRIPCIÓN ── -->
+    <section id="descripcion">
+      <h2>📋 Descripción general</h2>
+      <p>El <strong>Sistema de Carteras de Mora</strong> es una solución integral de procesamiento y visualización de datos diseñada para la Municipalidad de San Pedro Sula. Permite consolidar, normalizar y analizar las deudas tributarias distribuidas en 7 carteras de morosidad, generando una base de datos unificada y un dashboard web interactivo publicable en internet.</p>
+
+      <div class="card-grid">
+        <div class="card">
+          <span class="card-icon">⚡</span>
+          <h4>ETL Automatizado</h4>
+          <p>Procesa automáticamente los 7 archivos Excel, normaliza los datos y los carga en una base SQLite optimizada.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">🗃️</span>
+          <h4>Base de datos SQLite</h4>
+          <p>Base de datos local con índices, vistas preoptimizadas y esquema unificado para consultas rápidas.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">📊</span>
+          <h4>Dashboard HTML5</h4>
+          <p>Dashboard web interactivo con gráficos, KPIs y filtros. Funciona sin servidor, solo con un navegador.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">🐙</span>
+          <h4>Publicación en GitHub</h4>
+          <p>Soporte integrado para publicar el dashboard en GitHub Pages con un solo clic.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">🔄</span>
+          <h4>Actualizable</h4>
+          <p>El sistema está diseñado para ejecutarse periódicamente. Actualice los Excel y regenere la BD en minutos.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">📋</span>
+          <h4>Exportación a Excel</h4>
+          <p>Exporte todos los resúmenes y vistas SQL a un archivo Excel con formato profesional.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── REQUISITOS ── -->
+    <section id="requisitos">
+      <h2>⚙️ Requisitos del sistema</h2>
+
+      <h3>Software obligatorio</h3>
+      <table>
+        <tr><th>Software</th><th>Versión mínima</th><th>Descarga</th></tr>
+        <tr><td><strong>Python</strong></td><td>3.8 o superior</td><td>python.org</td></tr>
+        <tr><td><strong>pip</strong></td><td>Incluido con Python</td><td>—</td></tr>
+        <tr><td><strong>Navegador web</strong></td><td>Chrome, Edge o Firefox moderno</td><td>—</td></tr>
+      </table>
+
+      <h3>Librerías Python (se instalan automáticamente)</h3>
+      <table>
+        <tr><th>Librería</th><th>Uso</th></tr>
+        <tr><td><strong>pandas</strong></td><td>Lectura y procesamiento de archivos Excel</td></tr>
+        <tr><td><strong>openpyxl</strong></td><td>Motor de lectura de archivos .xlsx</td></tr>
+        <tr><td><strong>tqdm</strong></td><td>Barras de progreso en consola</td></tr>
+      </table>
+
+      <h3>Software opcional</h3>
+      <table>
+        <tr><th>Software</th><th>Para qué</th></tr>
+        <tr><td><strong>Git</strong></td><td>Publicación en GitHub Pages</td></tr>
+        <tr><td><strong>VS Code</strong></td><td>Edición de scripts y configuración</td></tr>
+      </table>
+
+      <div class="alert alert-info">
+        <span class="alert-icon">ℹ️</span>
+        <div>Al instalar Python, marque la opción <strong>"Add Python to PATH"</strong> para que el sistema lo detecte correctamente desde PowerShell y CMD.</div>
+      </div>
+    </section>
+
+    <!-- ── ESTRUCTURA ── -->
+    <section id="estructura">
+      <h2>📁 Estructura del proyecto</h2>
+      <div class="tree">
+        <span class="folder">📁 CARTERA_MORA/</span><br>
+        &nbsp;&nbsp;├── <span class="folder">📁 datos/</span>            <span class="note">← Coloque aquí los 7 archivos Excel</span><br>
+        &nbsp;&nbsp;├── <span class="folder">📁 salida/</span><br>
+        &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="file">carteras.db</span>        <span class="note">← Base de datos generada</span><br>
+        &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── <span class="folder">📁 logs/</span>           <span class="note">← Logs de cada ejecución</span><br>
+        &nbsp;&nbsp;├── <span class="folder">📁 scripts/</span><br>
+        &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="file">normalizar_carteras.py</span>  <span class="note">← ETL principal</span><br>
+        &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="file">verificar_bd.py</span>    <span class="note">← Verificación de integridad</span><br>
+        &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="file">exportar_excel.py</span>  <span class="note">← Exportación a Excel</span><br>
+        &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── <span class="file">configurar_github.py</span> <span class="note">← Gestión GitHub</span><br>
+        &nbsp;&nbsp;├── <span class="folder">📁 sql/</span><br>
+        &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── <span class="file">vistas_dashboard.sql</span>  <span class="note">← Vistas y consultas optimizadas</span><br>
+        &nbsp;&nbsp;├── <span class="folder">📁 web/</span><br>
+        &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="file">index.html</span>         <span class="note">← Dashboard principal</span><br>
+        &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="file">help.html</span>          <span class="note">← Este manual</span><br>
+        &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── <span class="file">carteras.db</span>        <span class="note">← Copia de la BD para el dashboard</span><br>
+        &nbsp;&nbsp;├── <span class="file">MENU.bat</span>                <span class="note">← Punto de entrada principal ⭐</span><br>
+        &nbsp;&nbsp;├── <span class="file">ejecutar.ps1</span>            <span class="note">← Lanzador PowerShell</span><br>
+        &nbsp;&nbsp;├── <span class="file">config_github.json</span>      <span class="note">← Configuración GitHub (generado)</span><br>
+        &nbsp;&nbsp;└── <span class="file">README.md</span>               <span class="note">← Documentación rápida</span>
+      </div>
+    </section>
+
+    <!-- ── INSTALACIÓN ── -->
+    <section id="instalacion">
+      <h2>🚀 Instalación inicial</h2>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Descomprimir el proyecto</h4>
+            <p>Copie la carpeta <code>CARTERA_MORA</code> en la ubicación de su preferencia (ej: <code>C:\Municipalidad\CARTERA_MORA\</code>).</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Copiar los archivos Excel</h4>
+            <p>Coloque los 7 archivos de carteras de morosidad en la carpeta <code>datos\</code>.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Ejecutar MENU.bat</h4>
+            <p>Haga doble clic en <strong>MENU.bat</strong>. Se abrirá la consola con el menú principal.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>Instalar dependencias (Opción 1)</h4>
+            <p>La primera vez, seleccione la opción <strong>1 — Instalar dependencias</strong>. Esto instalará automáticamente las librerías Python necesarias.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <h4>Procesar las carteras (Opción 2)</h4>
+            <p>Seleccione la opción <strong>2 — Procesar carteras</strong> para generar la base de datos SQLite por primera vez.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">6</div>
+          <div class="step-body">
+            <h4>Abrir el dashboard (Opción 7)</h4>
+            <p>Seleccione la opción <strong>7 — Abrir dashboard</strong> para visualizar los datos en el navegador.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── MENÚ ── -->
+    <section id="menu">
+      <h2>🗂️ Menú principal (MENU.bat)</h2>
+      <p>El archivo <strong>MENU.bat</strong> es el punto de entrada central del sistema. Al ejecutarlo aparece un menú numerado con todas las opciones disponibles.</p>
+
+      <table>
+        <tr><th>Opción</th><th>Nombre</th><th>Descripción</th></tr>
+        <tr>
+          <td><span class="badge badge-azul">1</span></td>
+          <td>Instalar dependencias</td>
+          <td>Instala las librerías Python necesarias. Ejecutar solo la primera vez o tras actualizar Python.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-azul">2</span></td>
+          <td>Procesar carteras</td>
+          <td>Lee los 7 Excel de <code>/datos/</code>, normaliza y genera la BD SQLite completa.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-verde">3</span></td>
+          <td>Verificar BD</td>
+          <td>Muestra estadísticas, KPIs y comprueba la integridad de la base de datos.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-verde">4</span></td>
+          <td>Exportar a Excel</td>
+          <td>Genera un archivo Excel con todas las vistas de resumen en hojas separadas.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-naranja">5</span></td>
+          <td>Actualizar dashboard</td>
+          <td>Regenera la BD, copia al dashboard y publica en GitHub si está configurado.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-naranja">6</span></td>
+          <td>GitHub / Publicar</td>
+          <td>Configura credenciales GitHub y publica el dashboard en GitHub Pages.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-gris">7</span></td>
+          <td>Abrir dashboard</td>
+          <td>Abre el dashboard en el navegador predeterminado.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-gris">8</span></td>
+          <td>Ver logs</td>
+          <td>Muestra el contenido del último log de ejecución.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-gris">9</span></td>
+          <td>Ayuda</td>
+          <td>Abre este manual en el navegador.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-rojo">0</span></td>
+          <td>Salir</td>
+          <td>Cierra el menú.</td>
+        </tr>
+      </table>
+    </section>
+
+    <!-- ── CARTERAS ── -->
+    <section id="carteras">
+      <h2>📂 Las 7 carteras de morosidad</h2>
+      <p>El sistema procesa las siguientes carteras, cada una en un archivo Excel separado. Todas corresponden a datos de antigüedad de mora a octubre 2025.</p>
+
+      <table>
+        <tr><th>#</th><th>Cartera</th><th>Identificador interno</th><th>Nota especial</th></tr>
+        <tr><td>1</td><td>Bienes Inmuebles</td><td><code>BIENES INMUEBLES</code></td><td>—</td></tr>
+        <tr><td>2</td><td>Servicios Públicos</td><td><code>SERVICIOS PÚBLICOS</code></td><td>—</td></tr>
+        <tr><td>3</td><td>Contribución por Mejoras (CPM)</td><td><code>CPM</code></td><td>—</td></tr>
+        <tr><td>4</td><td>Impuesto Personal</td><td><code>IMPUESTO PERSONAL</code></td><td>Incluye columna DIRECCION y USO</td></tr>
+        <tr><td>5</td><td>Industria y Comercio</td><td><code>INDUSTRIA Y COMERCIO</code></td><td>Incluye SUCURSALES y CANTIDAD REAL DE AÑOS</td></tr>
+        <tr><td>6</td><td>Letras CPM</td><td><code>LETRAS CPM</code></td><td>—</td></tr>
+        <tr><td>7</td><td>Convenios GM</td><td><code>CONVENIOS GM</code></td><td>Forward-fill en clave catastral. Campos exclusivos de convenio.</td></tr>
+      </table>
+
+      <div class="alert alert-warn">
+        <span class="alert-icon">⚠️</span>
+        <div>Las carteras son anuales y pueden contener registros repetidos entre sí (misma clave catastral con deudas de distintos años o tributos). Esto es <strong>comportamiento esperado</strong>. La vista <code>v_resumen_por_catastral</code> consolida toda la deuda histórica por predio.</div>
+      </div>
+    </section>
+
+    <!-- ── NORMALIZACIÓN ── -->
+    <section id="normalizacion">
+      <h2>🔤 Reglas de normalización</h2>
+
+      <h3>Campos normalizados</h3>
+      <table>
+        <tr><th>Campo</th><th>Proceso aplicado</th></tr>
+        <tr><td><strong>Nombre contribuyente</strong></td><td>Mayúsculas, eliminación de tildes (preservando ñ), colapso de espacios múltiples, limpieza de caracteres especiales, normalización de partículas (DE, DEL, DE LA).</td></tr>
+        <tr><td><strong>Razón social / Empresa</strong></td><td>Mismo proceso que nombre + estandarización de formas jurídicas (S.A., S. DE R.L., LTDA, etc.).</td></tr>
+        <tr><td><strong>Dirección</strong></td><td>Mayúsculas, normalización de abreviaciones (AV., BLVD., COL., CLL., KM).</td></tr>
+        <tr><td><strong>RMC</strong></td><td>Eliminación de espacios, guiones y puntos. Solo caracteres alfanuméricos en mayúsculas.</td></tr>
+        <tr><td><strong>Clave Catastral</strong></td><td>Ver sección específica más abajo.</td></tr>
+        <tr><td><strong>Sector / Barrio</strong></td><td>Mayúsculas y limpieza de caracteres especiales.</td></tr>
+      </table>
+
+      <h3>Convenios GM — Forward Fill</h3>
+      <p>En el archivo de Convenios GM, la columna de clave catastral puede tener celdas vacías debajo de un valor. Estas celdas vacías heredan el valor de la clave catastral superior, siguiendo la lógica del reporte original. Este proceso se aplica también a otras columnas con el mismo patrón: sector, barrio, tipo de predio, RMC, nombre, tipo de cargo y años de mora.</p>
+    </section>
+
+    <!-- ── CATASTRAL ── -->
+    <section id="catastral">
+      <h2>🗺️ Clave catastral — Formatos y normalización</h2>
+      <p>La clave catastral es un campo alfanumérico con múltiples formatos históricos vigentes. El sistema los detecta, normaliza y clasifica automáticamente.</p>
+
+      <h3>Formatos reconocidos</h3>
+      <table>
+        <tr><th>Tipo</th><th>Ejemplo en BD</th><th>Longitud</th><th>Identificación</th></tr>
+        <tr><td>Línea de vuelo</td><td><code>3194210000</code></td><td>Variable</td><td>Solo dígitos y guiones</td></tr>
+        <tr><td>INA 1975 suburbana</td><td><code>0109A001000</code></td><td>11</td><td>Letra en posición 5</td></tr>
+        <tr><td>Número de colonia</td><td><code>023012000</code></td><td>Variable</td><td>Solo numérico</td></tr>
+        <tr><td>Cuadrante</td><td><code>NE034006001</code></td><td>11</td><td>Inicia NE/NO/SE/SO</td></tr>
+        <tr><td>INA post-1993 urbano</td><td><code>010A001000</code></td><td>10</td><td>Letra en posición 4</td></tr>
+        <tr><td>Coordenadas 1:1000 urbano</td><td><code>FP314N47010</code></td><td>11</td><td>Inicia FP + letra</td></tr>
+        <tr><td>Coordenadas 1:1000 rural</td><td><code>FP240Z00015</code></td><td>11</td><td>Inicia FP + contiene Z</td></tr>
+        <tr><td><span class="badge badge-naranja">PH</span> Propiedad Horizontal</td><td><code>FP314N47010001</code></td><td>13–15</td><td>3 dígitos adicionales al final</td></tr>
+      </table>
+
+      <h3>Regla de ceros antepuestos</h3>
+      <table>
+        <tr><th>Longitud actual</th><th>Acción</th><th>Resultado</th></tr>
+        <tr><td>&lt; 7 caracteres</td><td>Sin cambios</td><td>Se preserva tal cual</td></tr>
+        <tr><td>7 caracteres</td><td>Sin cambios</td><td>Se preserva tal cual</td></tr>
+        <tr><td>8 caracteres</td><td>Anteponer <code>00</code></td><td>10 caracteres</td></tr>
+        <tr><td>9 caracteres</td><td>Anteponer <code>0</code></td><td>10 caracteres</td></tr>
+        <tr><td>10 caracteres</td><td>Sin cambios</td><td>Se preserva tal cual</td></tr>
+        <tr><td>13–15 caracteres</td><td>Sin cambios (PH)</td><td>Propiedad Horizontal</td></tr>
+      </table>
+
+      <div class="alert alert-warn">
+        <span class="alert-icon">⚠️</span>
+        <div>Excel puede convertir claves numéricas largas a notación científica (ej: <code>1.23E+09</code>). El sistema detecta y corrige este problema automáticamente antes de aplicar cualquier otra normalización.</div>
+      </div>
+    </section>
+
+    <!-- ── VISTAS SQL ── -->
+    <section id="vistas">
+      <h2>🔍 Vistas SQL del dashboard</h2>
+      <p>La base de datos SQLite incluye las siguientes vistas precalculadas para alimentar el dashboard con consultas rápidas:</p>
+
+      <table>
+        <tr><th>Vista</th><th>Descripción</th></tr>
+        <tr><td><code>v_kpis_generales</code></td><td>Totales globales: registros, predios únicos, contribuyentes, capital total, intereses, gran total.</td></tr>
+        <tr><td><code>v_resumen_por_catastral</code></td><td>Toda la deuda histórica agrupada por clave catastral. Incluye tributos adeudados, años de mora, totales.</td></tr>
+        <tr><td><code>v_resumen_por_tributo</code></td><td>Totales por tipo de tributo ordenados por deuda.</td></tr>
+        <tr><td><code>v_resumen_por_zona</code></td><td>Deuda agrupada por sector y barrio/colonia.</td></tr>
+        <tr><td><code>v_resumen_por_categoria</code></td><td>Distribución por categoría de morosidad (Alta/Media/Baja) y tributo.</td></tr>
+        <tr><td><code>v_contribuyente_completo</code></td><td>Vista cruzada por RMC con todos los tributos adeudados y predios.</td></tr>
+        <tr><td><code>v_evolucion_anual</code></td><td>Registros nuevos de mora por año y tributo (evolución histórica).</td></tr>
+        <tr><td><code>v_distribucion_tipo_predio</code></td><td>Distribución de deuda por tipo de predio y tributo.</td></tr>
+        <tr><td><code>v_convenios_estado</code></td><td>Estado de convenios GM: vencidos, vigentes, pagados y saldos.</td></tr>
+      </table>
+    </section>
+
+    <!-- ── GITHUB ── -->
+    <section id="github">
+      <h2>🐙 GitHub / Publicación web</h2>
+      <p>El sistema permite publicar el dashboard en <strong>GitHub Pages</strong> para acceso desde internet sin necesidad de servidor propio.</p>
+
+      <h3>Requisitos previos</h3>
+      <ul>
+        <li>Tener Git instalado (<a href="https://git-scm.com/download/win" target="_blank">git-scm.com</a>)</li>
+        <li>Tener una cuenta en <a href="https://github.com" target="_blank">github.com</a></li>
+        <li>Crear un repositorio vacío en GitHub</li>
+        <li>Generar un <strong>Token de acceso personal (PAT)</strong></li>
+      </ul>
+
+      <h3>Cómo generar el Token (PAT)</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body"><p>Vaya a <strong>github.com → Settings → Developer settings → Personal access tokens → Tokens (classic)</strong></p></div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body"><p>Haga clic en <strong>Generate new token</strong></p></div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body"><p>Seleccione el permiso <strong>repo</strong> (full control of private repositories)</p></div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body"><p>Copie el token generado y guárdelo. <strong>Solo se muestra una vez.</strong></p></div>
+        </div>
+      </div>
+
+      <h3>Activar GitHub Pages</h3>
+      <p>Después del primer push, vaya a su repositorio → <strong>Settings → Pages → Source</strong> y seleccione la rama <code>main</code>. El dashboard estará disponible en <code>https://usuario.github.io/repositorio/</code></p>
+
+      <h3>Modo Auto-push</h3>
+      <p>Si activa el <strong>auto-push</strong>, cada vez que ejecute la opción 5 (Actualizar dashboard) el sistema publicará automáticamente los cambios en GitHub Pages sin intervención adicional.</p>
+
+      <div class="alert alert-warn">
+        <span class="alert-icon">⚠️</span>
+        <div>Si su repositorio es <strong>público</strong>, la base de datos SQLite será accesible para cualquier persona. Si los datos son confidenciales, use un repositorio <strong>privado</strong> y active GitHub Pages solo para colaboradores.</div>
+      </div>
+    </section>
+
+    <!-- ── FAQ ── -->
+    <section id="faq">
+      <h2>❓ Preguntas frecuentes</h2>
+
+      <h3>¿Con qué frecuencia debo ejecutar el proceso?</h3>
+      <p>Cada vez que reciba nuevos archivos Excel de carteras actualizadas. El sistema regenera la BD completa, por lo que simplemente reemplace los archivos en <code>/datos/</code> y ejecute la opción 2.</p>
+
+      <h3>¿Qué pasa si un archivo Excel tiene columnas adicionales o diferentes?</h3>
+      <p>El sistema detecta automáticamente las columnas conocidas y mapea las variantes de nombres. Las columnas desconocidas se descartan (incluyendo columnas sin nombre que genera Excel). Se registra en el log cuántas columnas fueron mapeadas.</p>
+
+      <h3>¿Puedo agregar una nueva cartera en el futuro?</h3>
+      <p>Sí. Basta con colocar el nuevo archivo Excel en <code>/datos/</code>. Si el nombre del archivo no es reconocido automáticamente, el tributo se registrará como <em>DESCONOCIDO</em>. Para que sea reconocido correctamente, edite la función <code>detectar_tributo()</code> en <code>scripts/normalizar_carteras.py</code>.</p>
+
+      <h3>¿Los registros duplicados entre carteras se eliminan?</h3>
+      <p>No se eliminan de la tabla principal, ya que una misma clave catastral puede tener deudas legítimas en diferentes tributos y años. La vista <code>v_resumen_por_catastral</code> consolida toda esa información agrupada, mostrando el total acumulado por predio.</p>
+
+      <h3>¿El dashboard funciona sin internet?</h3>
+      <p>Sí. Al abrir <code>web/index.html</code> localmente, funciona completamente offline. La BD SQLite está embebida en la carpeta web y se carga directamente en el navegador.</p>
+    </section>
+
+    <!-- ── ERRORES ── -->
+    <section id="errores">
+      <h2>🛠️ Solución de errores comunes</h2>
+
+      <table>
+        <tr><th>Error</th><th>Causa probable</th><th>Solución</th></tr>
+        <tr>
+          <td><code>Python no encontrado</code></td>
+          <td>Python no está en el PATH del sistema</td>
+          <td>Reinstale Python marcando "Add to PATH" o agréguelo manualmente en Variables de entorno.</td>
+        </tr>
+        <tr>
+          <td><code>No se encontraron archivos .xlsx</code></td>
+          <td>Los archivos no están en la carpeta <code>/datos/</code></td>
+          <td>Copie los 7 archivos Excel a la carpeta <code>datos\</code> del proyecto.</td>
+        </tr>
+        <tr>
+          <td><code>ModuleNotFoundError: No module named 'openpyxl'</code></td>
+          <td>Librerías no instaladas</td>
+          <td>Ejecute la opción 1 del menú para instalar dependencias.</td>
+        </tr>
+        <tr>
+          <td>Claves catastrales en notación científica</td>
+          <td>Excel convierte valores numéricos largos</td>
+          <td>El sistema corrige esto automáticamente. No requiere acción manual.</td>
+        </tr>
+        <tr>
+          <td><code>git: command not found</code></td>
+          <td>Git no está instalado</td>
+          <td>Descargue e instale Git desde <a href="https://git-scm.com" target="_blank">git-scm.com</a>.</td>
+        </tr>
+        <tr>
+          <td>Error al publicar en GitHub</td>
+          <td>Token vencido o sin permisos</td>
+          <td>Genere un nuevo token PAT con permisos <code>repo</code> y actualícelo en la opción 6.</td>
+        </tr>
+        <tr>
+          <td>Dashboard no muestra datos</td>
+          <td>BD no copiada a la carpeta <code>/web/</code></td>
+          <td>Ejecute la opción 5 (Actualizar dashboard) para copiar la BD.</td>
+        </tr>
+      </table>
+
+      <div class="alert alert-info">
+        <span class="alert-icon">💡</span>
+        <div>Ante cualquier error, revise el log de la última ejecución usando la opción 8 del menú. Los logs incluyen la traza completa del error para facilitar el diagnóstico.</div>
+      </div>
+    </section>
+
+  </div><!-- /content -->
+</main>
+
+<script>
+  // Activar enlace del sidebar según sección visible
+  const links = document.querySelectorAll('nav a');
+  const sections = document.querySelectorAll('section[id]');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`nav a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

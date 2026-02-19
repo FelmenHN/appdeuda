@@ -1,0 +1,2397 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carteras de Mora — Municipalidad de San Pedro Sula</title>
+<script src="lib/sql-wasm.js"></script>
+<script src="lib/chart.umd.min.js"></script>
+<script src="lib/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;500;600;700;800&family=Barlow:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+:root {
+  --bg-base:#0d1117;--bg-surface:#161b22;--bg-elevated:#1c2230;--bg-panel:#21293a;
+  --border:#2a3447;--border-light:#344057;
+  --amber:#f0a500;--amber-dim:#c47f00;--amber-glow:rgba(240,165,0,.12);--amber-glow2:rgba(240,165,0,.06);
+  --teal:#00b4a6;--teal-dim:#008f84;--blue:#4a9eff;--red:#f05252;--green:#22c55e;--purple:#a78bfa;
+  --text-primary:#e6edf3;--text-secondary:#8b949e;--text-muted:#485567;
+  --nav-h:56px;--sidebar-w:280px;--radius:8px;--radius-lg:12px;
+  --font-display:'Barlow Condensed',sans-serif;--font-body:'Barlow',sans-serif;--font-mono:'JetBrains Mono',monospace;
+  --shadow:0 4px 24px rgba(0,0,0,.4);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg-base);color:var(--text-primary);font-family:var(--font-body);font-size:14px;line-height:1.5;}
+
+/* TOPBAR */
+#topbar{position:fixed;top:0;left:0;right:0;z-index:200;height:var(--nav-h);background:var(--bg-surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:20px;}
+.logo-mark{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0;}
+.logo-icon{width:32px;height:32px;background:var(--amber);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;font-family:var(--font-display);color:var(--bg-base);letter-spacing:-1px;}
+.logo-text{display:flex;flex-direction:column;line-height:1.1;}
+.logo-title{font-family:var(--font-display);font-size:13px;font-weight:700;color:var(--text-primary);letter-spacing:.5px;}
+.logo-sub{font-size:10px;font-weight:400;color:var(--text-muted);}
+.topbar-divider{width:1px;height:28px;background:var(--border);flex-shrink:0;}
+#vista-tabs{display:flex;gap:2px;flex:1;}
+.vtab{padding:7px 16px;border-radius:var(--radius);border:none;cursor:pointer;font-family:var(--font-display);font-size:13px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--text-secondary);background:transparent;display:flex;align-items:center;gap:7px;transition:all .18s;white-space:nowrap;}
+.vtab:hover{color:var(--text-primary);background:var(--bg-elevated);}
+.vtab.active{color:var(--amber);background:var(--amber-glow);border:1px solid rgba(240,165,0,.25);}
+.topbar-right{display:flex;align-items:center;gap:10px;margin-left:auto;}
+#db-status{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;font-family:var(--font-display);letter-spacing:.5px;background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-muted);}
+#db-status .dot{width:6px;height:6px;border-radius:50%;background:var(--text-muted);transition:background .3s;}
+#db-status.ok .dot{background:var(--green);box-shadow:0 0 6px var(--green);}
+#db-status.ok{color:var(--green);border-color:rgba(34,197,94,.3);}
+#db-status.err .dot{background:var(--red);}
+#db-status.err{color:var(--red);}
+#db-status.loading{color:var(--amber);border-color:rgba(240,165,0,.3);}
+#db-status.loading .dot{background:var(--amber);animation:pulse 1s infinite;}
+#last-update{font-size:11px;color:var(--text-muted);font-family:var(--font-mono);}
+
+/* LAYOUT */
+#app{display:flex;height:100vh;padding-top:var(--nav-h);}
+.vista{display:none;flex:1;overflow:hidden;}
+.vista.active{display:flex;}
+
+/* VISTA 1 */
+#vista-resultados{flex-direction:row;}
+
+/* SIDEBAR */
+#sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--bg-surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.sidebar-section{padding:14px 16px 10px;border-bottom:1px solid var(--border);}
+.sidebar-label{font-family:var(--font-display);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;}
+.kpi-stack{display:flex;flex-direction:column;gap:6px;}
+.kpi-mini{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;display:flex;flex-direction:column;gap:1px;position:relative;overflow:hidden;}
+.kpi-mini::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--amber);opacity:.5;}
+.kpi-mini.kpi-accent::before{background:var(--teal);opacity:.8;}
+.kpi-mini.kpi-blue::before{background:var(--blue);opacity:.8;}
+.kpi-mini-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);}
+.kpi-mini-val{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--text-primary);letter-spacing:-.3px;}
+.kpi-mini-val.kv-amber{color:var(--amber);}
+.kpi-mini-val.kv-teal{color:var(--teal);}
+.kpi-mini-val.kv-blue{color:var(--blue);}
+.kpi-mini-sub{font-size:10px;color:var(--text-muted);font-family:var(--font-mono);}
+.filter-group{display:flex;flex-direction:column;gap:8px;}
+.filter-item{display:flex;flex-direction:column;gap:4px;}
+.filter-item label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);}
+.filter-item select{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);padding:7px 10px;font-family:var(--font-body);font-size:12px;cursor:pointer;outline:none;transition:border-color .18s;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238b949e' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;}
+.filter-item select:focus{border-color:var(--amber);}
+.filter-item select option{background:var(--bg-elevated);}
+.year-range{display:flex;align-items:center;gap:6px;}
+.year-range select{flex:1;}
+.year-range span{font-size:11px;color:var(--text-muted);font-family:var(--font-mono);}
+.btn-reset{width:100%;padding:8px;background:transparent;border:1px solid var(--border);border-radius:var(--radius);color:var(--text-secondary);font-family:var(--font-display);font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .18s;margin-top:4px;}
+.btn-reset:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-glow);}
+#record-count{padding:10px 16px;font-size:11px;color:var(--text-muted);font-family:var(--font-mono);border-top:1px solid var(--border);background:var(--bg-base);display:flex;align-items:center;justify-content:space-between;}
+#record-count strong{color:var(--amber);}
+
+/* MAIN */
+#main-content{flex:1;overflow-y:auto;background:var(--bg-base);padding:20px;display:flex;flex-direction:column;gap:20px;}
+#main-content::-webkit-scrollbar{width:5px;}
+#main-content::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+/* KPI ROW */
+#kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.kpi-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px;position:relative;overflow:hidden;transition:border-color .2s;}
+.kpi-card:hover{border-color:var(--border-light);}
+.kpi-card-icon{font-size:18px;margin-bottom:8px;display:block;}
+.kpi-card-val{font-family:var(--font-display);font-size:26px;font-weight:800;letter-spacing:-.5px;color:var(--text-primary);line-height:1;margin-bottom:4px;}
+.kpi-card-val .currency{font-size:14px;font-weight:400;color:var(--text-muted);margin-right:3px;vertical-align:middle;}
+.kpi-card-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);}
+.kpi-card-sub{margin-top:8px;font-size:11px;color:var(--text-muted);font-family:var(--font-mono);}
+.kpi-card-bar{margin-top:12px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.kpi-card-bar-fill{height:100%;background:linear-gradient(90deg,var(--amber),var(--amber-dim));border-radius:2px;transition:width .8s ease;}
+
+/* CHARTS */
+#charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.chart-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px;display:flex;flex-direction:column;min-height:280px;animation:fadeIn .4s ease;}
+.chart-card.wide{grid-column:1/-1;}
+.chart-card.tall{min-height:340px;}
+.chart-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:10px;}
+.chart-title{font-family:var(--font-display);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-primary);}
+.chart-subtitle{font-size:11px;color:var(--text-muted);margin-top:2px;}
+.chart-badge{font-size:10px;font-weight:700;font-family:var(--font-display);letter-spacing:1px;padding:3px 8px;border-radius:4px;white-space:nowrap;}
+.badge-amber{background:var(--amber-glow);color:var(--amber);border:1px solid rgba(240,165,0,.2);}
+.badge-teal{background:rgba(0,180,166,.1);color:var(--teal);border:1px solid rgba(0,180,166,.2);}
+.badge-blue{background:rgba(74,158,255,.1);color:var(--blue);border:1px solid rgba(74,158,255,.2);}
+.chart-body{flex:1;position:relative;}
+
+/* EXPORT BAR */
+#export-bar{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.export-label{font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);flex-shrink:0;}
+.export-scope{font-size:12px;color:var(--text-secondary);flex:1;}
+.export-scope strong{color:var(--amber);}
+.btn-export{display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:var(--radius);border:1px solid;font-family:var(--font-display);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .18s;}
+.btn-export-csv{border-color:rgba(0,180,166,.4);color:var(--teal);background:rgba(0,180,166,.06);}
+.btn-export-csv:hover{background:rgba(0,180,166,.15);border-color:var(--teal);}
+.btn-export-excel{border-color:rgba(34,197,94,.4);color:var(--green);background:rgba(34,197,94,.06);}
+.btn-export-excel:hover{background:rgba(34,197,94,.15);border-color:var(--green);}
+
+/* TABLE */
+#table-section{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+.table-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+.table-title{font-family:var(--font-display);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+.table-search{margin-left:auto;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px;color:var(--text-primary);font-family:var(--font-body);font-size:12px;outline:none;width:220px;transition:border-color .18s;}
+.table-search:focus{border-color:var(--amber);}
+.table-search::placeholder{color:var(--text-muted);}
+.table-wrap{overflow-x:auto;max-height:420px;}
+.table-wrap::-webkit-scrollbar{height:4px;width:4px;}
+.table-wrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{background:var(--bg-elevated);padding:9px 14px;text-align:left;font-family:var(--font-display);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:1;cursor:pointer;user-select:none;transition:color .15s;}
+thead th:hover{color:var(--text-primary);}
+thead th.sorted{color:var(--amber);}
+tbody tr{border-bottom:1px solid var(--border);transition:background .12s;}
+tbody tr:hover{background:var(--bg-elevated);}
+tbody td{padding:8px 14px;color:var(--text-secondary);font-family:var(--font-mono);font-size:11px;white-space:nowrap;}
+tbody td.tc{font-family:var(--font-body);font-size:12px;color:var(--text-primary);}
+tbody td.tr{text-align:right;}
+tbody td.ta{color:var(--amber);font-weight:600;}
+.pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;font-family:var(--font-display);}
+.pill-alta{background:rgba(240,82,82,.15);color:#f05252;border:1px solid rgba(240,82,82,.25);}
+.pill-media{background:rgba(240,165,0,.15);color:#f0a500;border:1px solid rgba(240,165,0,.25);}
+.pill-baja{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.25);}
+.pill-tri{background:rgba(74,158,255,.12);color:#4a9eff;border:1px solid rgba(74,158,255,.25);}
+.table-footer{padding:10px 20px;border-top:1px solid var(--border);background:var(--bg-elevated);font-size:11px;color:var(--text-muted);font-family:var(--font-mono);display:flex;align-items:center;justify-content:space-between;}
+#page-controls{display:flex;align-items:center;gap:8px;}
+.btn-page{padding:4px 10px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:4px;color:var(--text-secondary);font-size:11px;cursor:pointer;transition:all .15s;}
+.btn-page:hover:not(:disabled){border-color:var(--amber);color:var(--amber);}
+.btn-page:disabled{opacity:.35;cursor:default;}
+
+/* LOADING */
+#loading-overlay{position:fixed;inset:0;z-index:9999;background:var(--bg-base);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity .5s;}
+#loading-overlay.hidden{opacity:0;pointer-events:none;}
+.loading-logo{width:56px;height:56px;background:var(--amber);border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:26px;font-weight:900;color:var(--bg-base);letter-spacing:-2px;}
+.loading-title{font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--text-primary);}
+.loading-msg{font-size:12px;color:var(--text-muted);font-family:var(--font-mono);}
+.loading-bar{width:260px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.loading-fill{height:100%;background:linear-gradient(90deg,var(--amber),var(--teal));border-radius:2px;animation:loadbar 2.5s ease-in-out infinite;}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;right:20px;z-index:9000;padding:12px 18px;background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);font-size:12px;color:var(--text-primary);display:flex;align-items:center;gap:8px;box-shadow:var(--shadow);transform:translateY(80px);opacity:0;transition:all .3s ease;pointer-events:none;}
+#toast.show{transform:translateY(0);opacity:1;}
+#toast.success{border-color:rgba(34,197,94,.4);}
+#toast.error{border-color:rgba(240,82,82,.4);}
+
+/* OTHER VISTAS */
+#vista-cobros,#vista-help{align-items:center;justify-content:center;flex-direction:column;gap:16px;color:var(--text-muted);}
+.cs-icon{font-size:48px;}
+.cs-title{font-family:var(--font-display);font-size:24px;font-weight:700;color:var(--text-secondary);}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes loadbar{0%{width:0;margin-left:0}50%{width:70%;margin-left:15%}100%{width:0;margin-left:100%}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:1100px){#kpi-row{grid-template-columns:1fr 1fr;}#charts-grid{grid-template-columns:1fr;}.chart-card.wide{grid-column:auto;}}
+
+/* ══ MAPA ══════════════════════════════════════════════════════════ */
+#vista-mapa { flex-direction: row; align-items: stretch; }
+
+#map-sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+  z-index: 10;
+}
+
+#map-container {
+  flex: 1; position: relative; overflow: hidden;
+}
+
+#leaflet-map {
+  width: 100%; height: 100%;
+}
+
+.btn-modo {
+  flex: 1; padding: 7px 8px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-size: 11px; font-weight: 700;
+  letter-spacing: .5px; text-transform: uppercase;
+  cursor: pointer; transition: all .18s;
+}
+.btn-modo:hover { color: var(--text-primary); border-color: var(--border-light); }
+.btn-modo.active {
+  background: var(--amber-glow);
+  border-color: rgba(240,165,0,.4);
+  color: var(--amber);
+}
+
+.btn-icon {
+  width: 22px; height: 22px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 14px; line-height: 1;
+  cursor: pointer; transition: all .15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.btn-icon:hover { color: var(--amber); border-color: var(--amber); }
+
+/* Layer list */
+.layer-item {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.layer-swatch {
+  width: 12px; height: 12px;
+  border-radius: 3px; flex-shrink: 0;
+}
+
+.layer-info { flex: 1; min-width: 0; }
+.layer-name {
+  font-size: 12px; font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.layer-meta { font-size: 10px; color: var(--text-muted); font-family: var(--font-mono); }
+
+.layer-controls { display: flex; gap: 4px; }
+
+/* Legend */
+#map-legend {
+  position: absolute; bottom: 20px; right: 14px; z-index: 500;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  box-shadow: var(--shadow);
+  min-width: 130px;
+}
+.legend-title {
+  font-family: var(--font-display);
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--text-muted); margin-bottom: 8px;
+}
+.legend-item {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 10px; color: var(--text-secondary);
+  font-family: var(--font-mono); margin-bottom: 4px;
+}
+.legend-swatch {
+  width: 14px; height: 14px;
+  border-radius: 3px; flex-shrink: 0;
+}
+
+/* Map loading */
+#map-loading {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  z-index: 600;
+}
+.map-loading-inner {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 20px;
+  font-size: 12px; color: var(--amber);
+  font-family: var(--font-mono);
+}
+
+/* GEO PANEL */
+.geo-panel-closed {
+  position: absolute; top: 0; right: 0; bottom: 0;
+  width: 360px;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border);
+  z-index: 1000;
+  display: flex; flex-direction: column;
+  transform: translateX(100%);
+  transition: transform .3s ease;
+  box-shadow: var(--shadow);
+}
+.geo-panel-open { transform: translateX(0) !important; }
+
+.geo-panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--bg-elevated);
+}
+.geo-panel-body {
+  flex: 1; overflow-y: auto;
+  padding: 16px 20px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.geo-panel-body::-webkit-scrollbar { width: 4px; }
+.geo-panel-body::-webkit-scrollbar-thumb { background: var(--border); }
+
+/* Upload zone */
+.upload-zone {
+  border: 2px dashed var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--bg-elevated);
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--amber);
+  background: var(--amber-glow);
+}
+
+/* Leaflet overrides */
+.leaflet-container {
+  background: #0d1117 !important;
+  font-family: var(--font-body) !important;
+}
+.leaflet-tile { filter: brightness(.8) saturate(.6) hue-rotate(180deg); }
+.leaflet-popup-content-wrapper {
+  background: var(--bg-panel) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow) !important;
+  color: var(--text-primary) !important;
+}
+.leaflet-popup-tip { background: var(--bg-panel) !important; }
+.leaflet-popup-content { margin: 10px 14px !important; font-size: 12px; }
+.leaflet-control-zoom a {
+  background: var(--bg-surface) !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border) !important;
+}
+.leaflet-control-zoom a:hover {
+  background: var(--bg-elevated) !important;
+  color: var(--amber) !important;
+}
+.leaflet-attribution-flag { display: none !important; }
+.leaflet-control-attribution {
+  background: rgba(13,17,23,.8) !important;
+  color: var(--text-muted) !important;
+  font-size: 9px !important;
+}
+
+
+/* ══ GESTIÓN DE COBROS ═════════════════════════════════════════════════════ */
+#vista-cobros { flex-direction: row; align-items: stretch; }
+
+#cob-sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+
+#cob-main {
+  flex: 1; display: flex; flex-direction: column;
+  overflow: hidden; background: var(--bg-base);
+}
+
+/* Sub-tabs */
+#cob-tabs {
+  display: flex; gap: 2px; padding: 10px 16px 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface);
+  flex-shrink: 0;
+}
+.cob-tab {
+  padding: 7px 18px;
+  background: transparent; border: 1px solid transparent;
+  border-radius: var(--radius) var(--radius) 0 0;
+  border-bottom: none;
+  color: var(--text-muted);
+  font-family: var(--font-display); font-size: 12px;
+  font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+  cursor: pointer; transition: all .18s;
+}
+.cob-tab:hover { color: var(--text-primary); }
+.cob-tab.active {
+  background: var(--bg-base);
+  border-color: var(--border);
+  border-bottom-color: var(--bg-base);
+  color: var(--amber);
+  margin-bottom: -1px;
+}
+
+.cob-tab-content { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+.cob-tab-content.active { display: flex; }
+
+/* Table header strip */
+.cob-table-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface);
+  flex-shrink: 0;
+}
+
+/* Forms */
+.cob-input {
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  padding: 7px 10px;
+  font-family: var(--font-body); font-size: 12px;
+  outline: none; transition: border-color .18s;
+  resize: vertical;
+}
+.cob-input:focus { border-color: var(--amber); }
+.cob-input option { background: var(--bg-elevated); }
+.cob-input-date {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  padding: 7px 10px;
+  font-family: var(--font-body); font-size: 12px;
+  outline: none; width: 100%;
+  transition: border-color .18s;
+}
+.cob-input-date:focus { border-color: var(--amber); }
+
+/* Buttons */
+.cob-btn-new {
+  width: 100%; padding: 9px;
+  background: var(--amber-glow);
+  border: 1px solid rgba(240,165,0,.35);
+  border-radius: var(--radius);
+  color: var(--amber);
+  font-family: var(--font-display); font-size: 12px;
+  font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  cursor: pointer; transition: all .18s;
+}
+.cob-btn-new:hover { background: rgba(240,165,0,.2); }
+
+.cob-btn-save {
+  padding: 9px 20px;
+  background: var(--amber);
+  border: none; border-radius: var(--radius);
+  color: var(--bg-base);
+  font-family: var(--font-display); font-size: 12px;
+  font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+  cursor: pointer; transition: all .18s;
+}
+.cob-btn-save:hover { background: var(--amber-dim); }
+
+/* Modal */
+.cob-modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 2000;
+  background: rgba(0,0,0,.7); backdrop-filter: blur(4px);
+  align-items: center; justify-content: center;
+}
+.cob-modal-overlay.open { display: flex; }
+.cob-modal {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 60px rgba(0,0,0,.6);
+  width: 90%; max-width: 760px; max-height: 90vh;
+  display: flex; flex-direction: column;
+  animation: fadeIn .2s ease;
+}
+.cob-modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  font-family: var(--font-display); font-size: 14px;
+  font-weight: 700; letter-spacing: .5px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.cob-modal-body {
+  flex: 1; overflow-y: auto; padding: 20px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.cob-modal-body::-webkit-scrollbar { width: 4px; }
+.cob-modal-body::-webkit-scrollbar-thumb { background: var(--border); }
+.cob-modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: flex-end; gap: 10px;
+  background: var(--bg-elevated);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+/* Form rows */
+.cob-form-row { display: flex; gap: 12px; }
+.cob-field { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+.cob-field label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.2px; color: var(--text-muted);
+}
+
+/* Estado pills */
+.pill-pendiente  { background:rgba(240,165,0,.12); color:var(--amber);  border:1px solid rgba(240,165,0,.25); }
+.pill-cumplio    { background:rgba(34,197,94,.12);  color:var(--green);  border:1px solid rgba(34,197,94,.25); }
+.pill-incumplio  { background:rgba(240,82,82,.12);  color:var(--red);    border:1px solid rgba(240,82,82,.25); }
+.pill-acuerdo    { background:rgba(74,158,255,.12); color:var(--blue);   border:1px solid rgba(74,158,255,.25); }
+
+/* Días vencimiento traffic light */
+.dias-ok   { color: var(--green); font-family: var(--font-mono); font-size:11px; }
+.dias-warn { color: var(--amber); font-family: var(--font-mono); font-size:11px; }
+.dias-late { color: var(--red);   font-family: var(--font-mono); font-size:11px; }
+
+/* page-controls */
+.page-controls { display:flex; align-items:center; gap:8px; }
+
+
+/* ── Startup / Loading overlay ─────────────────────── */
+#loading-overlay{position:fixed;inset:0;background:#0d1117;display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity .4s}
+#loading-overlay.hidden{opacity:0;pointer-events:none}
+#startup-box{background:var(--bg-panel);border:1px solid var(--border);border-radius:12px;padding:36px 40px;max-width:480px;width:90%;text-align:center;box-shadow:0 20px 60px #0006}
+.startup-logo{width:56px;height:56px;background:var(--amber);color:#0d1117;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;margin:0 auto 14px}
+.startup-title{font-size:18px;font-weight:600;color:var(--text);margin-bottom:4px}
+.startup-subtitle{font-size:12px;color:var(--text-muted);margin-bottom:28px}
+.startup-spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--amber);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+#startup-msg{font-size:13px;color:var(--text-muted)}
+.startup-warn{font-size:12px;color:#f0a500;background:#f0a50015;border:1px solid #f0a50040;border-radius:6px;padding:10px 14px;margin-bottom:20px;line-height:1.6;text-align:left}
+.picker-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;text-align:left}
+.picker-label{font-size:12px;color:var(--text-muted);min-width:150px}
+.req-star{color:var(--amber)}
+.picker-btn{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:11px;color:var(--text);cursor:pointer;white-space:nowrap;transition:border-color .2s}
+.picker-btn:hover{border-color:var(--amber);color:var(--amber)}
+.picker-btn.loaded{border-color:#22c55e;color:#22c55e}
+.picker-status{font-size:11px;color:var(--text-muted);flex:1;text-align:right}
+.picker-status.ok{color:#22c55e}
+.picker-status.err{color:#f05252}
+.launch-btn{margin-top:20px;width:100%;padding:12px;background:var(--amber);color:#0d1117;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s}
+.launch-btn:disabled{opacity:.35;cursor:not-allowed}
+.launch-btn:not(:disabled):hover{opacity:.85}
+.picker-hint{margin-top:14px;font-size:11px;color:var(--text-muted);line-height:1.5}
+.picker-hint code{background:var(--bg-card);padding:1px 5px;border-radius:3px;font-family:var(--font-mono);color:var(--teal)}
+
+</style>
+<link rel="stylesheet" href="lib/leaflet.min.css"/>
+<script src="lib/leaflet.min.js"></script>
+</head>
+<body>
+<div id="loading-overlay">
+  <div id="startup-box">
+    <div class="startup-logo">CM</div>
+    <div class="startup-title">Sistema de Carteras de Mora</div>
+    <div class="startup-subtitle">Municipalidad de San Pedro Sula</div>
+
+    <div id="startup-auto">
+      <div class="startup-spinner"></div>
+      <div id="startup-msg">Conectando con las bases de datos...</div>
+    </div>
+
+    <div id="startup-picker" style="display:none">
+      <div class="startup-warn">
+        No se encontraron las bases de datos en la carpeta actual.<br>
+        Seleccione los archivos manualmente:
+      </div>
+      <div class="picker-row">
+        <label class="picker-label required">carteras.db <span class="req-star">*</span></label>
+        <label class="picker-btn" id="btn-pick-carteras">
+          Seleccionar archivo
+          <input type="file" id="pick-carteras" accept=".db,.sqlite" style="display:none">
+        </label>
+        <span class="picker-status" id="st-carteras">—</span>
+      </div>
+      <div class="picker-row">
+        <label class="picker-label">gestion_cobros.db</label>
+        <label class="picker-btn" id="btn-pick-cobros">
+          Seleccionar archivo
+          <input type="file" id="pick-cobros" accept=".db,.sqlite" style="display:none">
+        </label>
+        <span class="picker-status" id="st-cobros">opcional</span>
+      </div>
+      <div class="picker-row">
+        <label class="picker-label">geodatos.db</label>
+        <label class="picker-btn" id="btn-pick-geo">
+          Seleccionar archivo
+          <input type="file" id="pick-geo" accept=".db,.sqlite" style="display:none">
+        </label>
+        <span class="picker-status" id="st-geo">opcional</span>
+      </div>
+      <button id="btn-launch" class="launch-btn" disabled onclick="launchWithFiles()">
+        Abrir Dashboard
+      </button>
+      <div class="picker-hint">
+        Los archivos .db se encuentran en la carpeta <code>salida\</code> del proyecto.
+      </div>
+    </div>
+
+  </div>
+</div>
+  <div class="loading-title">Carteras de Mora</div>
+  <div class="loading-msg" id="loading-msg">Inicializando base de datos...</div>
+  <div class="loading-bar"><div class="loading-fill"></div></div>
+</div>
+<div id="topbar">
+  <a class="logo-mark" href="#">
+    <div class="logo-icon">CM</div>
+    <div class="logo-text">
+      <span class="logo-title">Carteras de Mora</span>
+      <span class="logo-sub">Municipalidad de San Pedro Sula</span>
+    </div>
+  </a>
+  <div class="topbar-divider"></div>
+  <div id="vista-tabs">
+    <button class="vtab active" onclick="switchVista('resultados')" id="vtab-resultados"><span>&#128202;</span> Resultados</button>
+    <button class="vtab" onclick="switchVista('mapa')" id="vtab-mapa"><span>&#128506;&#65039;</span> Mapa</button>
+    <button class="vtab" onclick="switchVista('cobros')" id="vtab-cobros"><span>&#128203;</span> Gesti&#243;n de Cobros</button>
+    <button class="vtab" onclick="switchVista('help')" id="vtab-help"><span>&#10067;</span> Ayuda</button>
+  </div>
+  <div class="topbar-right">
+    <div id="db-status" class="loading"><div class="dot"></div><span id="db-status-txt">Cargando BD...</span></div>
+    <div id="last-update"></div>
+  </div>
+</div>
+<div id="app">
+  <div class="vista active" id="vista-resultados">
+    <div id="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Totales filtrados</div>
+        <div class="kpi-stack">
+          <div class="kpi-mini"><span class="kpi-mini-label">Gran Total Deuda</span><span class="kpi-mini-val kv-amber" id="sk-total">&#8212;</span><span class="kpi-mini-sub">L. Capital + Intereses</span></div>
+          <div class="kpi-mini kpi-accent"><span class="kpi-mini-label">Capital</span><span class="kpi-mini-val kv-teal" id="sk-capital">&#8212;</span></div>
+          <div class="kpi-mini kpi-blue"><span class="kpi-mini-label">Intereses</span><span class="kpi-mini-val kv-blue" id="sk-intereses">&#8212;</span></div>
+        </div>
+      </div>
+      <div class="sidebar-section" style="flex:1;overflow-y:auto;">
+        <div class="sidebar-label">Filtros</div>
+        <div class="filter-group">
+          <div class="filter-item"><label>Tributo</label><select id="f-tributo" onchange="applyFilters()"><option value="">Todos los tributos</option></select></div>
+          <div class="filter-item"><label>Sector</label><select id="f-sector" onchange="applyFilters()"><option value="">Todos los sectores</option></select></div>
+          <div class="filter-item"><label>Categor&#237;a de Morosidad</label><select id="f-categoria" onchange="applyFilters()"><option value="">Todas las categor&#237;as</option><option>MOROSIDAD ALTA</option><option>MOROSIDAD MEDIA</option><option>MOROSIDAD BAJA</option></select></div>
+          <div class="filter-item"><label>Tipo de Predio</label><select id="f-predio" onchange="applyFilters()"><option value="">Todos los tipos</option></select></div>
+          <div class="filter-item"><label>A&#241;o de inicio de mora</label><div class="year-range"><select id="f-anio-ini" onchange="applyFilters()"><option value="">Desde</option></select><span>&#8212;</span><select id="f-anio-fin" onchange="applyFilters()"><option value="">Hasta</option></select></div></div>
+          <div class="filter-item"><label>Zona de Cobranza</label><select id="f-zona" onchange="applyFilters()"><option value="">Todas las zonas</option></select></div>
+          <button class="btn-reset" onclick="resetFilters()">&#8634; Limpiar filtros</button>
+        </div>
+      </div>
+      <div id="record-count"><span>Registros: <strong id="rec-count">&#8212;</strong></span><span id="rec-pct" style="font-size:10px;"></span></div>
+    </div>
+    <div id="main-content">
+      <div id="kpi-row">
+        <div class="kpi-card"><span class="kpi-card-icon">&#127963;&#65039;</span><div class="kpi-card-val"><span class="currency">L.</span><span id="k-total">&#8212;</span></div><div class="kpi-card-label">Gran Total Deuda</div><div class="kpi-card-sub" id="k-total-sub">Capital + Intereses</div><div class="kpi-card-bar"><div class="kpi-card-bar-fill" style="width:100%"></div></div></div>
+        <div class="kpi-card"><span class="kpi-card-icon">&#127968;</span><div class="kpi-card-val" style="color:var(--teal)" id="k-predios">&#8212;</div><div class="kpi-card-label">Predios con Deuda</div><div class="kpi-card-sub" id="k-predios-sub">Claves catastrales &#250;nicas</div><div class="kpi-card-bar"><div class="kpi-card-bar-fill" id="k-predios-bar" style="width:0%;background:linear-gradient(90deg,var(--teal),var(--teal-dim))"></div></div></div>
+        <div class="kpi-card"><span class="kpi-card-icon">&#128100;</span><div class="kpi-card-val" style="color:var(--blue)" id="k-contribuyentes">&#8212;</div><div class="kpi-card-label">Contribuyentes</div><div class="kpi-card-sub" id="k-contrib-sub">RMC &#250;nicos en mora</div><div class="kpi-card-bar"><div class="kpi-card-bar-fill" id="k-contrib-bar" style="width:0%;background:linear-gradient(90deg,var(--blue),#2563eb)"></div></div></div>
+      </div>
+      <div id="charts-grid">
+        <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Deuda por Tributo</div><div class="chart-subtitle">Gran total acumulado por portafolio</div></div><span class="chart-badge badge-amber">L. MILLONES</span></div><div class="chart-body"><canvas id="chart-tributo"></canvas></div></div>
+        <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Distribuci&#243;n por Categor&#237;a</div><div class="chart-subtitle">Proporci&#243;n de registros por nivel de mora</div></div><span class="chart-badge badge-teal">SEGMENTOS</span></div><div class="chart-body" style="display:flex;align-items:center;justify-content:center"><canvas id="chart-categoria" style="max-height:200px;max-width:300px"></canvas></div></div>
+        <div class="chart-card wide tall"><div class="chart-header"><div><div class="chart-title">Evoluci&#243;n Hist&#243;rica de Mora</div><div class="chart-subtitle">Acumulaci&#243;n de deuda por a&#241;o de inicio de mora</div></div><span class="chart-badge badge-blue">ANUAL</span></div><div class="chart-body"><canvas id="chart-evolucion"></canvas></div></div>
+        <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Top Sectores</div><div class="chart-subtitle">Deuda total por sector geogr&#225;fico</div></div><span class="chart-badge badge-amber">SECTOR</span></div><div class="chart-body"><canvas id="chart-sector"></canvas></div></div>
+        <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Tipo de Predio</div><div class="chart-subtitle">Deuda por clasificaci&#243;n de predio</div></div><span class="chart-badge badge-teal">PREDIO</span></div><div class="chart-body" style="display:flex;align-items:center;justify-content:center"><canvas id="chart-predio" style="max-height:200px;max-width:300px"></canvas></div></div>
+      </div>
+      <div id="export-bar">
+        <span class="export-label">Exportar</span>
+        <span class="export-scope">Datos filtrados: <strong id="export-count">&#8212;</strong> registros<span id="export-filter-desc" style="color:var(--text-muted);"></span></span>
+        <button class="btn-export btn-export-csv" onclick="exportCSV()">&#8595; CSV</button>
+        <button class="btn-export btn-export-excel" onclick="exportExcel()">&#8595; Excel (.xlsx)</button>
+      </div>
+      <div id="table-section">
+        <div class="table-header"><div class="table-title">Detalle de Registros</div><input type="text" class="table-search" id="table-search" placeholder="Buscar nombre, RMC, catastral..." oninput="filterTable()"></div>
+        <div class="table-wrap"><table id="data-table">
+          <thead><tr>
+            <th onclick="sortTable(0)">Catastral &#8597;</th>
+            <th onclick="sortTable(1)">RMC &#8597;</th>
+            <th onclick="sortTable(2)">Contribuyente &#8597;</th>
+            <th onclick="sortTable(3)">Tributo &#8597;</th>
+            <th onclick="sortTable(4)">Sector &#8597;</th>
+            <th onclick="sortTable(5)">Barrio/Colonia &#8597;</th>
+            <th onclick="sortTable(6)">A&#241;o &#8597;</th>
+            <th onclick="sortTable(7)">Capital L. &#8597;</th>
+            <th onclick="sortTable(8)">Intereses L. &#8597;</th>
+            <th onclick="sortTable(9)">Total L. &#8597;</th>
+            <th onclick="sortTable(10)">Categor&#237;a &#8597;</th>
+          </tr></thead>
+          <tbody id="table-body"></tbody>
+        </table></div>
+        <div class="table-footer"><span id="table-info">&#8212;</span><div id="page-controls"><button class="btn-page" id="btn-prev" onclick="changePage(-1)" disabled>&#8592; Anterior</button><span id="page-info" style="font-size:11px;padding:0 6px;"></span><button class="btn-page" id="btn-next" onclick="changePage(1)">Siguiente &#8594;</button></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ VISTA 2: MAPA ══ -->
+  <div class="vista" id="vista-mapa">
+
+    <!-- LEFT PANEL — KPIs zona seleccionada -->
+    <div id="map-sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Zona seleccionada</div>
+        <div id="map-zona-title" style="font-family:var(--font-display);font-size:15px;font-weight:700;color:var(--amber);margin-bottom:10px;">Haga clic en una zona</div>
+        <div class="kpi-stack">
+          <div class="kpi-mini"><span class="kpi-mini-label">Deuda Total</span><span class="kpi-mini-val kv-amber" id="mz-total">—</span></div>
+          <div class="kpi-mini kpi-accent"><span class="kpi-mini-label">Predios</span><span class="kpi-mini-val kv-teal" id="mz-predios">—</span></div>
+          <div class="kpi-mini kpi-blue"><span class="kpi-mini-label">Contribuyentes</span><span class="kpi-mini-val kv-blue" id="mz-contribs">—</span></div>
+        </div>
+      </div>
+
+      <!-- Modo de visualización -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">Modo de visualización</div>
+        <div style="display:flex;gap:6px;margin-bottom:12px;">
+          <button class="btn-modo active" id="modo-puntos" onclick="setModo('puntos')">&#9679; Puntos</button>
+          <button class="btn-modo" id="modo-coro" onclick="setModo('coropletico')">&#9632; Coroplético</button>
+        </div>
+        <div class="filter-item">
+          <label>Colorear por</label>
+          <select id="map-campo" onchange="refreshMapData()">
+            <option value="total">Deuda total (L.)</option>
+            <option value="predios">Número de predios</option>
+            <option value="contribuyentes">Contribuyentes</option>
+          </select>
+        </div>
+        <div class="filter-item" style="margin-top:8px;">
+          <label>Filtrar tributo</label>
+          <select id="map-tributo" onchange="refreshMapData()">
+            <option value="">Todos</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Capas SHP cargadas -->
+      <div class="sidebar-section" style="flex:1;overflow-y:auto;">
+        <div class="sidebar-label" style="display:flex;align-items:center;justify-content:space-between;">
+          Capas geográficas
+          <button class="btn-icon" onclick="openGeoPanel()" title="Cargar nueva capa SHP">&#43;</button>
+        </div>
+        <div id="layers-list">
+          <div style="font-size:11px;color:var(--text-muted);padding:8px 0;">
+            No hay capas cargadas.<br>Use el botón + para cargar un ZIP con Shapefiles.
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:12px 16px;border-top:1px solid var(--border);">
+        <button class="btn-reset" onclick="openGeoPanel()">&#9881; Configurar capas SHP</button>
+      </div>
+    </div>
+
+    <!-- MAP CONTAINER -->
+    <div id="map-container">
+      <div id="leaflet-map"></div>
+
+      <!-- Map legend -->
+      <div id="map-legend">
+        <div class="legend-title">Deuda (L. M)</div>
+        <div id="legend-items"></div>
+      </div>
+
+      <!-- Loading indicator -->
+      <div id="map-loading" style="display:none;">
+        <div class="map-loading-inner">Cargando datos...</div>
+      </div>
+    </div>
+
+    <!-- GEO CONFIG PANEL (slide-in) -->
+    <div id="geo-panel" class="geo-panel-closed">
+      <div class="geo-panel-header">
+        <span style="font-family:var(--font-display);font-size:14px;font-weight:700;letter-spacing:.5px;">CONFIGURAR CAPAS GEOGRÁFICAS</span>
+        <button class="btn-icon" onclick="closeGeoPanel()">&#x2715;</button>
+      </div>
+      <div class="geo-panel-body">
+
+        <!-- Upload zone -->
+        <div class="upload-zone" id="drop-zone"
+             onclick="document.getElementById('shp-input').click()"
+             ondragover="event.preventDefault();this.classList.add('drag-over')"
+             ondragleave="this.classList.remove('drag-over')"
+             ondrop="handleDrop(event)">
+          <div style="font-size:28px;margin-bottom:8px;">&#128230;</div>
+          <div style="font-family:var(--font-display);font-size:14px;font-weight:700;color:var(--text-primary);">Cargar Shapefile</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Arrastre un archivo ZIP aquí o haga clic para seleccionar</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:8px;">Debe contener: .shp + .dbf + .prj (obligatorios) + .shx</div>
+          <input type="file" id="shp-input" accept=".zip" style="display:none" onchange="handleFileInput(event)">
+        </div>
+
+        <!-- Layer config form -->
+        <div id="layer-form" style="display:none;">
+          <div style="font-family:var(--font-display);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;">Configurar nueva capa</div>
+          <div class="filter-item"><label>Nombre de la capa</label><input type="text" id="lf-nombre" class="table-search" style="width:100%;margin-left:0;" placeholder="Ej: Colonias SPS"></div>
+          <div class="filter-item" style="margin-top:8px;"><label>Descripción</label><input type="text" id="lf-desc" class="table-search" style="width:100%;margin-left:0;" placeholder="Descripción opcional"></div>
+          <div style="display:flex;gap:10px;margin-top:8px;">
+            <div class="filter-item" style="flex:1;"><label>Color</label><input type="color" id="lf-color" value="#f0a500" style="width:100%;height:35px;border-radius:6px;border:1px solid var(--border);background:var(--bg-elevated);cursor:pointer;"></div>
+            <div class="filter-item" style="flex:1;"><label>Opacidad</label><input type="range" id="lf-opacidad" min="0.1" max="1" step="0.1" value="0.6" style="width:100%;margin-top:10px;"></div>
+          </div>
+          <div id="layer-preview" style="margin-top:10px;font-size:11px;color:var(--text-muted);"></div>
+          <div style="display:flex;gap:8px;margin-top:12px;">
+            <button class="btn-export btn-export-excel" style="flex:1;" onclick="saveLayer()">&#10003; Guardar capa</button>
+            <button class="btn-reset" style="width:auto;padding:8px 14px;" onclick="cancelLayer()">Cancelar</button>
+          </div>
+        </div>
+
+        <!-- Existing layers -->
+        <div style="margin-top:16px;">
+          <div class="sidebar-label">Capas guardadas</div>
+          <div id="geo-layers-list">
+            <div style="font-size:11px;color:var(--text-muted);">No hay capas guardadas aún.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /vista-mapa -->
+
+  <div class="vista" id="vista-cobros">
+
+  <!-- LEFT SIDEBAR — KPIs + Filtros -->
+  <div id="cob-sidebar">
+
+    <!-- KPI strip -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">KPIs de Gestión</div>
+      <div class="kpi-stack">
+        <div class="kpi-mini"><span class="kpi-mini-label">Total Gestiones</span><span class="kpi-mini-val kv-amber" id="cob-k-total">—</span></div>
+        <div class="kpi-mini kpi-accent"><span class="kpi-mini-label">Tasa Contacto</span><span class="kpi-mini-val kv-teal" id="cob-k-contacto">—</span></div>
+        <div class="kpi-mini kpi-blue"><span class="kpi-mini-label">Tasa Promesa</span><span class="kpi-mini-val kv-blue" id="cob-k-promesa">—</span></div>
+        <div class="kpi-mini" style="--pill-color:var(--green)"><span class="kpi-mini-label">Tasa Cumplimiento</span><span class="kpi-mini-val" style="color:var(--green)" id="cob-k-cumplimiento">—</span></div>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="sidebar-section" style="flex:1;overflow-y:auto;">
+      <div class="sidebar-label">Filtros</div>
+      <div class="filter-group">
+        <div class="filter-item">
+          <label>Canal de contacto</label>
+          <select id="cob-f-canal" onchange="cobRefresh()">
+            <option value="">Todos</option>
+            <option>Llamada</option><option>Visita</option>
+            <option>Email</option><option>WhatsApp</option>
+            <option>Carta</option><option>SMS</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <label>Resultado</label>
+          <select id="cob-f-resultado" onchange="cobRefresh()">
+            <option value="">Todos</option>
+            <option>Contactado</option><option>No contactado</option>
+            <option>Promesa de pago</option><option>Acuerdo de pago</option>
+            <option>Rechazó</option><option>Sin respuesta</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <label>Estado seguimiento</label>
+          <select id="cob-f-estado" onchange="cobRefresh()">
+            <option value="">Todos</option>
+            <option>PENDIENTE</option><option>CUMPLIÓ</option>
+            <option>INCUMPLIÓ</option><option>EN ACUERDO</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <label>Gestor</label>
+          <select id="cob-f-gestor" onchange="cobRefresh()">
+            <option value="">Todos</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <label>Fecha desde</label>
+          <input type="date" id="cob-f-desde" class="cob-input-date" onchange="cobRefresh()">
+        </div>
+        <div class="filter-item">
+          <label>Fecha hasta</label>
+          <input type="date" id="cob-f-hasta" class="cob-input-date" onchange="cobRefresh()">
+        </div>
+        <button class="btn-reset" onclick="cobResetFiltros()">↺ Limpiar filtros</button>
+      </div>
+    </div>
+
+    <!-- Nueva gestión -->
+    <div style="padding:12px 16px;border-top:1px solid var(--border);">
+      <button class="cob-btn-new" onclick="openGestionForm()">+ Nueva Gestión</button>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div id="cob-main">
+
+    <!-- Sub-tabs -->
+    <div id="cob-tabs">
+      <button class="cob-tab active" id="ctab-gestiones"  onclick="cobSwitchTab('gestiones')">Gestiones</button>
+      <button class="cob-tab"        id="ctab-compromisos" onclick="cobSwitchTab('compromisos')">Compromisos pendientes</button>
+      <button class="cob-tab"        id="ctab-acuerdos"    onclick="cobSwitchTab('acuerdos')">Acuerdos de pago</button>
+    </div>
+
+    <!-- TAB: GESTIONES -->
+    <div class="cob-tab-content active" id="ctab-content-gestiones">
+      <div class="cob-table-header">
+        <span class="table-title">Historial de gestiones</span>
+        <span id="cob-rec-count" style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);"></span>
+        <input type="text" class="table-search" id="cob-search"
+               placeholder="Buscar catastral, RMC, contribuyente..."
+               oninput="cobFilterTable()">
+        <button class="btn-export btn-export-csv" onclick="cobExportCSV()" style="margin-left:4px;">↓ CSV</button>
+      </div>
+      <div class="table-wrap" style="max-height:calc(100vh - 240px);">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="cobSortTable(0)">Fecha</th>
+              <th onclick="cobSortTable(1)">Catastral</th>
+              <th onclick="cobSortTable(2)">Contribuyente</th>
+              <th onclick="cobSortTable(3)">Tributo</th>
+              <th onclick="cobSortTable(4)">Canal</th>
+              <th onclick="cobSortTable(5)">Resultado</th>
+              <th onclick="cobSortTable(6)" class="tr">Monto</th>
+              <th onclick="cobSortTable(7)">Compromiso</th>
+              <th onclick="cobSortTable(8)">Estado</th>
+              <th>Gestor</th>
+              <th style="width:60px;"></th>
+            </tr>
+          </thead>
+          <tbody id="cob-table-body">
+            <tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:40px;">
+              Cargando datos de gestiones...
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-footer">
+        <span id="cob-table-info"></span>
+        <div id="cob-page-controls" class="page-controls">
+          <button class="btn-page" id="cob-btn-prev" onclick="cobChangePage(-1)">&#8592; Anterior</button>
+          <span id="cob-page-info" style="font-size:11px;color:var(--text-muted);"></span>
+          <button class="btn-page" id="cob-btn-next" onclick="cobChangePage(1)">Siguiente &#8594;</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: COMPROMISOS -->
+    <div class="cob-tab-content" id="ctab-content-compromisos">
+      <div class="cob-table-header">
+        <span class="table-title">Compromisos de pago pendientes</span>
+        <span style="font-size:11px;color:var(--text-muted);margin-left:auto;">Ordenado por fecha de vencimiento</span>
+      </div>
+      <div class="table-wrap" style="max-height:calc(100vh - 240px);">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha gestión</th>
+              <th>Catastral</th>
+              <th>Contribuyente</th>
+              <th>Tributo</th>
+              <th class="tr">Monto</th>
+              <th>Fecha compromiso</th>
+              <th>Días venc.</th>
+              <th>Gestor</th>
+              <th style="width:80px;"></th>
+            </tr>
+          </thead>
+          <tbody id="cob-compromisos-body">
+            <tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:40px;">Sin compromisos pendientes</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: ACUERDOS -->
+    <div class="cob-tab-content" id="ctab-content-acuerdos">
+      <div class="cob-table-header">
+        <span class="table-title">Acuerdos de pago</span>
+        <button class="cob-btn-new" style="margin-left:auto;" onclick="openAcuerdoForm()">+ Nuevo Acuerdo</button>
+      </div>
+      <div class="table-wrap" style="max-height:calc(100vh - 240px);">
+        <table>
+          <thead>
+            <tr>
+              <th>Catastral</th>
+              <th>Contribuyente</th>
+              <th>Tributo</th>
+              <th class="tr">Total acuerdo</th>
+              <th>Cuotas</th>
+              <th class="tr">Valor cuota</th>
+              <th>Inicio</th>
+              <th>Estado</th>
+              <th>Gestor</th>
+              <th style="width:60px;"></th>
+            </tr>
+          </thead>
+          <tbody id="cob-acuerdos-body">
+            <tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:40px;">Sin acuerdos registrados</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /cob-main -->
+
+  <!-- MODAL: NUEVA GESTIÓN -->
+  <div id="cob-modal-overlay" class="cob-modal-overlay" onclick="closeGestionForm()">
+    <div class="cob-modal" onclick="event.stopPropagation()">
+      <div class="cob-modal-header">
+        <span id="cob-modal-title">Nueva Gestión de Cobro</span>
+        <button class="btn-icon" onclick="closeGestionForm()">&#x2715;</button>
+      </div>
+      <div class="cob-modal-body">
+
+        <!-- Fila 1: Identificación -->
+        <div class="cob-form-row">
+          <div class="cob-field">
+            <label>Clave Catastral</label>
+            <input type="text" id="gf-catastral" class="cob-input" placeholder="Ej: 010010001001" onblur="cobBuscarCatastral()">
+          </div>
+          <div class="cob-field">
+            <label>RMC</label>
+            <input type="text" id="gf-rmc" class="cob-input" placeholder="Ej: 123456">
+          </div>
+        </div>
+        <div class="cob-form-row">
+          <div class="cob-field" style="flex:2;">
+            <label>Nombre contribuyente</label>
+            <input type="text" id="gf-nombre" class="cob-input" placeholder="Nombre completo">
+          </div>
+          <div class="cob-field">
+            <label>Tributo</label>
+            <select id="gf-tributo" class="cob-input">
+              <option value="">Seleccionar</option>
+              <option>BIENES INMUEBLES</option>
+              <option>INDUSTRIA Y COMERCIO</option>
+              <option>CPM</option>
+              <option>SERVICIOS PÚBLICOS</option>
+              <option>IMPUESTO PERSONAL</option>
+              <option>CONVENIOS GM</option>
+              <option>LETRAS CPM</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Fila 2: Gestión -->
+        <div class="cob-form-row">
+          <div class="cob-field">
+            <label>Fecha gestión</label>
+            <input type="datetime-local" id="gf-fecha" class="cob-input">
+          </div>
+          <div class="cob-field">
+            <label>Canal de contacto</label>
+            <select id="gf-canal" class="cob-input">
+              <option>Llamada</option><option>Visita</option>
+              <option>Email</option><option>WhatsApp</option>
+              <option>Carta</option><option>SMS</option>
+            </select>
+          </div>
+          <div class="cob-field">
+            <label>Resultado</label>
+            <select id="gf-resultado" class="cob-input" onchange="cobToggleCompromiso()">
+              <option>Contactado</option>
+              <option>No contactado</option>
+              <option>Promesa de pago</option>
+              <option>Acuerdo de pago</option>
+              <option>Rechazó</option>
+              <option>Sin respuesta</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Fila 3: Motivo + Compromiso (condicional) -->
+        <div class="cob-form-row">
+          <div class="cob-field" style="flex:2;">
+            <label>Motivo de mora</label>
+            <select id="gf-motivo" class="cob-input">
+              <option value="">Sin motivo específico</option>
+            </select>
+          </div>
+          <div class="cob-field" id="gf-compromiso-group" style="display:none;">
+            <label>Monto comprometido (L.)</label>
+            <input type="number" id="gf-monto" class="cob-input" placeholder="0.00" step="0.01" min="0">
+          </div>
+          <div class="cob-field" id="gf-fecha-comp-group" style="display:none;">
+            <label>Fecha de pago prometida</label>
+            <input type="date" id="gf-fecha-compromiso" class="cob-input">
+          </div>
+        </div>
+
+        <!-- Fila 4: Gestor + Estado -->
+        <div class="cob-form-row">
+          <div class="cob-field" style="flex:2;">
+            <label>Observaciones</label>
+            <textarea id="gf-obs" class="cob-input" rows="2" placeholder="Notas adicionales sobre la gestión..."></textarea>
+          </div>
+          <div class="cob-field">
+            <label>Gestor responsable</label>
+            <input type="text" id="gf-gestor" class="cob-input" placeholder="Nombre del gestor">
+          </div>
+        </div>
+
+      </div>
+      <div class="cob-modal-footer">
+        <button class="btn-reset" onclick="closeGestionForm()">Cancelar</button>
+        <button class="cob-btn-save" onclick="saveGestion()">&#10003; Guardar gestión</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ACTUALIZAR ESTADO (inline) -->
+  <div id="cob-estado-overlay" class="cob-modal-overlay" onclick="closeEstadoForm()">
+    <div class="cob-modal" style="max-width:420px;" onclick="event.stopPropagation()">
+      <div class="cob-modal-header">
+        <span>Actualizar estado de seguimiento</span>
+        <button class="btn-icon" onclick="closeEstadoForm()">&#x2715;</button>
+      </div>
+      <div class="cob-modal-body">
+        <div class="cob-field" style="margin-bottom:12px;">
+          <label>Nuevo estado</label>
+          <select id="ef-estado" class="cob-input">
+            <option>PENDIENTE</option>
+            <option>CUMPLIÓ</option>
+            <option>INCUMPLIÓ</option>
+            <option>EN ACUERDO</option>
+          </select>
+        </div>
+        <div class="cob-field">
+          <label>Nota de seguimiento</label>
+          <textarea id="ef-nota" class="cob-input" rows="2" placeholder="Opcional..."></textarea>
+        </div>
+      </div>
+      <div class="cob-modal-footer">
+        <button class="btn-reset" onclick="closeEstadoForm()">Cancelar</button>
+        <button class="cob-btn-save" onclick="saveEstado()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /vista-cobros -->
+
+
+  <div class="vista" id="vista-help"><iframe src="help.html" style="width:100%;height:100%;border:none;"></iframe></div>
+</div>
+<div id="toast"></div>
+<script>
+let DB=null,ALL_DATA=[],FULL_TOTAL=0,CHARTS={},TABLE_SORTED=[],PAGE=0;
+const PAGE_SIZE=50,SORT_COL=9;let SORT_ASC=false,SORT_IDX=9;
+const FMT=new Intl.NumberFormat('es-HN',{minimumFractionDigits:0,maximumFractionDigits:0});
+const FMT2=new Intl.NumberFormat('es-HN',{minimumFractionDigits:2,maximumFractionDigits:2});
+function fmtM(n){if(!n&&n!==0)return'&#8212;';const m=parseFloat(n);if(isNaN(m))return'&#8212;';if(Math.abs(m)>=1e9)return(m/1e9).toFixed(2)+' B';if(Math.abs(m)>=1e6)return(m/1e6).toFixed(2)+' M';return FMT.format(m);}
+function fmtN(n){if(!n&&n!==0)return'&#8212;';const v=parseFloat(n);return isNaN(v)?'&#8212;':FMT2.format(v);}
+function fmtI(n){if(!n&&n!==0)return'&#8212;';return FMT.format(parseInt(n));}
+function switchVista(id){document.querySelectorAll('.vista').forEach(v=>v.classList.remove('active'));document.querySelectorAll('.vtab').forEach(t=>t.classList.remove('active'));document.getElementById('vista-'+id).classList.add('active');document.getElementById('vtab-'+id).classList.add('active');}
+async function loadDB(){
+  setMsg('Inicializando motor SQL...');
+  try{
+    const SQL = await initSqlJs({
+      locateFile: f => `lib/${f}`
+    });
+    window._SQL = SQL;
+
+    // Try auto-load from relative path
+    let buf = null;
+    try{
+      setMsg('Buscando carteras.db en carpeta actual...');
+      const resp = await fetch('carteras.db');
+      if(resp.ok){ buf = await resp.arrayBuffer(); }
+    } catch(e){ /* network/path error */ }
+
+    if(buf){
+      // Auto-load succeeded
+      await finishLoadDB(SQL, buf, null, null);
+    } else {
+      // Show file picker
+      setMsg('No se encontro carteras.db — seleccione los archivos manualmente.');
+      document.getElementById('startup-auto').style.display = 'none';
+      document.getElementById('startup-picker').style.display = 'block';
+      setupPickers(SQL);
+    }
+  } catch(e){
+    console.error(e);
+    setStatus('err','Error al inicializar SQL');
+    setMsg('\u26A0 ' + e.message);
+  }
+}
+
+function setupPickers(SQL){
+  const pickCarteras = document.getElementById('pick-carteras');
+  const pickCobros   = document.getElementById('pick-cobros');
+  const pickGeo      = document.getElementById('pick-geo');
+  const btnLaunch    = document.getElementById('btn-launch');
+
+  let fileCarteras = null, fileCobros = null, fileGeo = null;
+
+  function readFile(file){
+    return new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload  = e => res(e.target.result);
+      r.onerror = () => rej(new Error('Error leyendo archivo'));
+      r.readAsArrayBuffer(file);
+    });
+  }
+
+  function updateLaunch(){
+    btnLaunch.disabled = !fileCarteras;
+  }
+
+  pickCarteras.addEventListener('change', async e => {
+    const f = e.target.files[0];
+    if(!f) return;
+    fileCarteras = f;
+    document.getElementById('btn-pick-carteras').classList.add('loaded');
+    document.getElementById('st-carteras').textContent = f.name;
+    document.getElementById('st-carteras').className = 'picker-status ok';
+    updateLaunch();
+  });
+
+  pickCobros.addEventListener('change', e => {
+    const f = e.target.files[0];
+    if(!f) return;
+    fileCobros = f;
+    document.getElementById('btn-pick-cobros').classList.add('loaded');
+    document.getElementById('st-cobros').textContent = f.name;
+    document.getElementById('st-cobros').className = 'picker-status ok';
+  });
+
+  pickGeo.addEventListener('change', e => {
+    const f = e.target.files[0];
+    if(!f) return;
+    fileGeo = f;
+    document.getElementById('btn-pick-geo').classList.add('loaded');
+    document.getElementById('st-geo').textContent = f.name;
+    document.getElementById('st-geo').className = 'picker-status ok';
+  });
+
+  // Make label click open the hidden input
+  document.getElementById('btn-pick-carteras').addEventListener('click', () => pickCarteras.click());
+  document.getElementById('btn-pick-cobros').addEventListener('click',   () => pickCobros.click());
+  document.getElementById('btn-pick-geo').addEventListener('click',      () => pickGeo.click());
+
+  window._pendingFiles = { readFile, fileCarteras: ()=>fileCarteras,
+                           fileCobros: ()=>fileCobros, fileGeo: ()=>fileGeo, SQL };
+}
+
+async function launchWithFiles(){
+  const { readFile, fileCarteras, fileCobros, fileGeo, SQL } = window._pendingFiles;
+  const fC = fileCarteras(), fCob = fileCobros(), fG = fileGeo();
+  if(!fC){ alert('Seleccione carteras.db primero.'); return; }
+
+  document.getElementById('startup-picker').style.display = 'none';
+  document.getElementById('startup-auto').style.display   = 'block';
+  setMsg('Leyendo archivos seleccionados...');
+
+  try{
+    const bufC   = await readFile(fC);
+    const bufCob = fCob ? await readFile(fCob) : null;
+    const bufG   = fG   ? await readFile(fG)   : null;
+    await finishLoadDB(SQL, bufC, bufCob, bufG);
+  } catch(e){
+    console.error(e);
+    setStatus('err','Error al leer archivos');
+    setMsg('\u26A0 ' + e.message);
+    document.getElementById('startup-auto').style.display   = 'none';
+    document.getElementById('startup-picker').style.display = 'block';
+  }
+}
+
+async function finishLoadDB(SQL, bufCarteras, bufCobros, bufGeo){
+  setMsg('Abriendo carteras.db...');
+  DB = new SQL.Database(new Uint8Array(bufCarteras));
+  const r = DB.exec("SELECT COUNT(*) FROM cartera_mora");
+  FULL_TOTAL = r[0].values[0][0];
+
+  // Load secondary DBs if provided as buffers, else try fetch
+  if(bufCobros){
+    DB_COB = new SQL.Database(new Uint8Array(bufCobros));
+  } else {
+    try{
+      const resp = await fetch('gestion_cobros.db');
+      if(resp.ok){ DB_COB = new SQL.Database(new Uint8Array(await resp.arrayBuffer())); }
+    } catch(e){ /* optional */ }
+  }
+  if(!DB_COB){ DB_COB = new SQL.Database(); cobCreateSchema(); }
+
+  if(bufGeo){
+    DB_GEO = new SQL.Database(new Uint8Array(bufGeo));
+  } else {
+    try{
+      const resp = await fetch('geodatos.db');
+      if(resp.ok){ DB_GEO = new SQL.Database(new Uint8Array(await resp.arrayBuffer())); }
+    } catch(e){ /* optional */ }
+  }
+
+  window._SQL = SQL;
+  setMsg('Cargando filtros...');
+  populateFilters();
+  setMsg('Consultando datos...');
+  await applyFilters();
+  setStatus('ok', `BD activa \u2014 ${FMT.format(FULL_TOTAL)} registros`);
+  document.getElementById('last-update').textContent = 'Cargado: ' + new Date().toLocaleDateString('es-HN');
+  setTimeout(() => document.getElementById('loading-overlay').classList.add('hidden'), 600);
+}
+
+
+function setStatus(s,t){const el=document.getElementById('db-status');el.className=s;document.getElementById('db-status-txt').textContent=t;}
+function setMsg(m){document.getElementById('loading-msg').textContent=m;}
+function qArr(sql){const r=DB.exec(sql);return r.length?r[0].values:[];}
+function populate(sid,sql,col){const sel=document.getElementById(sid);const res=DB.exec(sql);if(res.length)res[0].values.forEach(r=>{if(r[0])sel.add(new Option(r[0],r[0]));});}
+function populateFilters(){
+  populate('f-tributo',"SELECT DISTINCT _tributo FROM cartera_mora WHERE _tributo IS NOT NULL ORDER BY _tributo");
+  populate('f-sector',"SELECT DISTINCT sector FROM cartera_mora WHERE sector IS NOT NULL AND sector!='' AND sector NOT LIKE 'ERROR%' ORDER BY sector");
+  populate('f-predio',"SELECT DISTINCT tipo_predio FROM cartera_mora WHERE tipo_predio IS NOT NULL AND tipo_predio!='' ORDER BY tipo_predio");
+  populate('f-zona',"SELECT DISTINCT clasificacion_zona FROM cartera_mora WHERE clasificacion_zona IS NOT NULL AND clasificacion_zona!='' ORDER BY clasificacion_zona");
+  const yR=DB.exec("SELECT MIN(CAST(anio_inicio_mora AS INT)),MAX(CAST(anio_inicio_mora AS INT)) FROM cartera_mora WHERE anio_inicio_mora IS NOT NULL AND anio_inicio_mora>1900");
+  if(yR.length){let[yMin,yMax]=yR[0].values[0];const ini=document.getElementById('f-anio-ini');const fin=document.getElementById('f-anio-fin');for(let y=yMin;y<=yMax;y++){ini.add(new Option(y,y));fin.add(new Option(y,y));}fin.value=yMax;}
+}
+function buildWhere(){
+  const c=[];
+  const t=document.getElementById('f-tributo').value;
+  const s=document.getElementById('f-sector').value;
+  const cat=document.getElementById('f-categoria').value;
+  const p=document.getElementById('f-predio').value;
+  const ai=document.getElementById('f-anio-ini').value;
+  const af=document.getElementById('f-anio-fin').value;
+  const z=document.getElementById('f-zona').value;
+  if(t)  c.push("_tributo='"        +t.split("'").join("''")+  "'");
+  if(s)  c.push("sector='"          +s.split("'").join("''")+  "'");
+  if(cat)c.push("categoria_morosidad='"+cat.split("'").join("''")+"'");
+  if(p)  c.push("tipo_predio='"     +p.split("'").join("''")+  "'");
+  if(ai) c.push("CAST(anio_inicio_mora AS INT)>="+parseInt(ai));
+  if(af) c.push("CAST(anio_inicio_mora AS INT)<="+parseInt(af));
+  if(z)  c.push("clasificacion_zona='"+z.split("'").join("''")+"'");
+  return "WHERE 1=1"+(c.length?" AND "+c.join(" AND "):"");
+}
+
+function getFilterDesc(){const p=[];const t=document.getElementById('f-tributo').value;const s=document.getElementById('f-sector').value;const cat=document.getElementById('f-categoria').value;if(t)p.push(t);if(s)p.push(s);if(cat)p.push(cat.replace('MOROSIDAD ',''));return p.length?' \u00b7 '+p.join(', '):''}
+async function applyFilters(){
+  if(!DB)return;const w=buildWhere();
+  const sr=DB.exec(`SELECT COUNT(*) AS n,COUNT(DISTINCT clave_catastral) AS pr,COUNT(DISTINCT rmc) AS co,SUM(CAST(REPLACE(COALESCE(saldo_capital,'0'),',','') AS REAL)) AS cap,SUM(CAST(REPLACE(COALESCE(intereses,'0'),',','') AS REAL)) AS inte,SUM(CAST(REPLACE(COALESCE(total_apagar,'0'),',','') AS REAL)) AS tot FROM cartera_mora ${w}`);
+  const[cnt,pr,co,cap,inte,tot]=sr[0].values[0];
+  document.getElementById('k-total').textContent=fmtM(tot);
+  document.getElementById('k-predios').textContent=fmtI(pr);
+  document.getElementById('k-contribuyentes').textContent=fmtI(co);
+  document.getElementById('k-total-sub').textContent=`L. ${fmtN(cap)} cap. + L. ${fmtN(inte)} int.`;
+  document.getElementById('k-predios-sub').textContent=`${Math.round(pr/22408*100)}% del total de predios`;
+  document.getElementById('k-contrib-sub').textContent=`${Math.round(co/32415*100)}% del total`;
+  document.getElementById('k-predios-bar').style.width=Math.min(100,Math.round(pr/22408*100))+'%';
+  document.getElementById('k-contrib-bar').style.width=Math.min(100,Math.round(co/32415*100))+'%';
+  document.getElementById('sk-total').textContent='L. '+fmtM(tot);
+  document.getElementById('sk-capital').textContent='L. '+fmtM(cap);
+  document.getElementById('sk-intereses').textContent='L. '+fmtM(inte);
+  document.getElementById('rec-count').textContent=FMT.format(cnt);
+  document.getElementById('rec-pct').textContent=`(${Math.round(cnt/FULL_TOTAL*100)}%)`;
+  document.getElementById('export-count').textContent=FMT.format(cnt);
+  document.getElementById('export-filter-desc').textContent=getFilterDesc();
+  updateCharts(w);loadTableData(w);
+}
+const PAL=['#f0a500','#00b4a6','#4a9eff','#a78bfa','#f05252','#22c55e','#fb923c','#e879f9','#38bdf8','#a3e635'];
+const TT={backgroundColor:'#21293a',borderColor:'#2a3447',borderWidth:1,titleColor:'#e6edf3',bodyColor:'#8b949e',titleFont:{family:'Barlow Condensed',size:13,weight:'700'},bodyFont:{family:'JetBrains Mono',size:11},padding:10,cornerRadius:6};
+const GRID={color:'#2a3447',drawBorder:false};
+const TICK_STYLE={color:'#8b949e',font:{family:'Barlow',size:11}};
+function mkChart(id,type,data,opts){const ctx=document.getElementById(id).getContext('2d');if(CHARTS[id])CHARTS[id].destroy();CHARTS[id]=new Chart(ctx,{type,data,options:opts});return CHARTS[id];}
+function updateCharts(w){
+  const dT=qArr(`SELECT _tributo,SUM(CAST(REPLACE(COALESCE(total_apagar,'0'),',','') AS REAL)) AS v FROM cartera_mora ${w} GROUP BY _tributo ORDER BY v DESC`);
+  mkChart('chart-tributo','bar',{labels:dT.map(r=>r[0]),datasets:[{data:dT.map(r=>(r[1]||0)/1e6),backgroundColor:PAL,borderRadius:4,borderSkipped:false}]},{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:ctx=>`L. ${FMT2.format(ctx.parsed.x)} M`}}},scales:{x:{grid:GRID,ticks:{...TICK_STYLE,callback:v=>`${v}M`}},y:{grid:GRID,ticks:{color:'#8b949e',font:{family:'Barlow',size:10}}}}});
+  const dC=qArr(`SELECT COALESCE(categoria_morosidad,'SIN CATEG.'),COUNT(*) FROM cartera_mora ${w} AND categoria_morosidad IS NOT NULL AND categoria_morosidad!='' GROUP BY categoria_morosidad ORDER BY 2 DESC`);
+  const cCol={'MOROSIDAD ALTA':'#f05252','MOROSIDAD MEDIA':'#f0a500','MOROSIDAD BAJA':'#22c55e'};
+  mkChart('chart-categoria','doughnut',{labels:dC.map(r=>r[0]),datasets:[{data:dC.map(r=>r[1]),backgroundColor:dC.map(r=>cCol[r[0]]||'#4a9eff'),borderWidth:0,hoverOffset:8}]},{responsive:true,maintainAspectRatio:true,cutout:'65%',plugins:{legend:{position:'right',labels:{color:'#8b949e',font:{family:'Barlow',size:10},boxWidth:10,padding:8}},tooltip:TT}});
+  const dE=qArr(`SELECT CAST(anio_inicio_mora AS INT) AS y,_tributo,SUM(CAST(REPLACE(COALESCE(total_apagar,'0'),',','') AS REAL)) AS v FROM cartera_mora ${w} AND anio_inicio_mora IS NOT NULL AND CAST(anio_inicio_mora AS INT)>1990 AND CAST(anio_inicio_mora AS INT)<=2025 GROUP BY y,_tributo ORDER BY y`);
+  const years=[...new Set(dE.map(r=>r[0]))].sort();const tribs=[...new Set(dE.map(r=>r[1]))];
+  const piv={};dE.forEach(([y,t,v])=>{if(!piv[t])piv[t]={};piv[t][y]=(v||0)/1e6;});
+  mkChart('chart-evolucion','line',{labels:years,datasets:tribs.map((t,i)=>({label:t,data:years.map(y=>piv[t][y]||0),borderColor:PAL[i%PAL.length],backgroundColor:PAL[i%PAL.length]+'20',fill:true,tension:.35,pointRadius:2,borderWidth:2}))},{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'#8b949e',font:{family:'Barlow',size:10},boxWidth:10,padding:8}},tooltip:{...TT,callbacks:{label:ctx=>`${ctx.dataset.label}: L. ${FMT2.format(ctx.parsed.y)} M`}}},scales:{x:{grid:GRID,ticks:TICK_STYLE},y:{grid:GRID,ticks:{...TICK_STYLE,callback:v=>`${v}M`}}}});
+  const dS=qArr(`SELECT sector,SUM(CAST(REPLACE(COALESCE(total_apagar,'0'),',','') AS REAL)) AS v FROM cartera_mora ${w} AND sector IS NOT NULL AND sector!='' AND sector NOT LIKE 'ERROR%' GROUP BY sector ORDER BY v DESC LIMIT 8`);
+  mkChart('chart-sector','bar',{labels:dS.map(r=>r[0]),datasets:[{data:dS.map(r=>(r[1]||0)/1e6),backgroundColor:PAL,borderRadius:4,borderSkipped:false}]},{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:ctx=>`L. ${FMT2.format(ctx.parsed.y)} M`}}},scales:{x:{grid:GRID,ticks:{color:'#8b949e',font:{family:'Barlow',size:10},maxRotation:30}},y:{grid:GRID,ticks:{...TICK_STYLE,callback:v=>`${v}M`}}}});
+  const dP=qArr(`SELECT COALESCE(tipo_predio,'SIN TIPO'),COUNT(*) FROM cartera_mora ${w} AND tipo_predio IS NOT NULL AND tipo_predio!='' GROUP BY tipo_predio ORDER BY 2 DESC LIMIT 7`);
+  mkChart('chart-predio','doughnut',{labels:dP.map(r=>r[0]),datasets:[{data:dP.map(r=>r[1]),backgroundColor:PAL,borderWidth:0,hoverOffset:8}]},{responsive:true,maintainAspectRatio:true,cutout:'65%',plugins:{legend:{position:'right',labels:{color:'#8b949e',font:{family:'Barlow',size:10},boxWidth:10,padding:8}},tooltip:TT}});
+}
+function loadTableData(w){
+  ALL_DATA=qArr(`SELECT clave_catastral,rmc,nombre_contribuyente,_tributo,sector,barrio_colonia,anio_inicio_mora,CAST(REPLACE(COALESCE(saldo_capital,'0'),',','') AS REAL),CAST(REPLACE(COALESCE(intereses,'0'),',','') AS REAL),CAST(REPLACE(COALESCE(total_apagar,'0'),',','') AS REAL),categoria_morosidad FROM cartera_mora ${w} ORDER BY CAST(REPLACE(COALESCE(total_apagar,'0'),',','') AS REAL) DESC LIMIT 5000`);
+  TABLE_SORTED=[...ALL_DATA];applyTableSearch();
+}
+function applyTableSearch(){const q=document.getElementById('table-search').value.toLowerCase().trim();TABLE_SORTED=q?ALL_DATA.filter(r=>[r[0],r[1],r[2],r[3],r[4],r[5]].some(v=>v&&String(v).toLowerCase().includes(q))):[...ALL_DATA];sortCurrentData();}
+function filterTable(){applyTableSearch();}
+function sortTable(col){if(SORT_IDX===col)SORT_ASC=!SORT_ASC;else{SORT_IDX=col;SORT_ASC=col<7;}document.querySelectorAll('thead th').forEach((th,i)=>{th.classList.toggle('sorted',i===col);});sortCurrentData();}
+function sortCurrentData(){TABLE_SORTED.sort((a,b)=>{const va=a[SORT_IDX],vb=b[SORT_IDX];if(va==null)return 1;if(vb==null)return-1;const n=SORT_IDX>=7?(parseFloat(va)||0)-(parseFloat(vb)||0):String(va).localeCompare(String(vb));return SORT_ASC?n:-n;});PAGE=0;renderTable();}
+function renderTable(){
+  const start=PAGE*PAGE_SIZE,end=Math.min(start+PAGE_SIZE,TABLE_SORTED.length),rows=TABLE_SORTED.slice(start,end);
+  const cc={'MOROSIDAD ALTA':'pill-alta','MOROSIDAD MEDIA':'pill-media','MOROSIDAD BAJA':'pill-baja'};
+  document.getElementById('table-body').innerHTML=rows.length?rows.map(r=>`<tr><td><code style="font-size:10px;color:var(--teal)">${r[0]||'&#8212;'}</code></td><td><code style="font-size:10px;color:var(--text-muted)">${r[1]||'&#8212;'}</code></td><td class="tc" style="max-width:180px;overflow:hidden;text-overflow:ellipsis">${r[2]||'&#8212;'}</td><td><span class="pill pill-tri">${(r[3]||'').replace(' Y COMERCIO','').replace(' PERSONAL','').replace('SERVICIOS ','SRV.').replace('BIENES ','B.')}</span></td><td class="tc" style="font-size:11px">${r[4]||'&#8212;'}</td><td class="tc" style="font-size:11px">${r[5]||'&#8212;'}</td><td class="tr">${r[6]||'&#8212;'}</td><td class="tr">${fmtN(r[7])}</td><td class="tr">${fmtN(r[8])}</td><td class="tr ta">${fmtN(r[9])}</td><td><span class="pill ${cc[r[10]]||'pill-tri'}">${(r[10]||'S/C').replace('MOROSIDAD ','')}</span></td></tr>`).join(''):`<tr><td colspan="11" style="padding:32px;text-align:center;color:var(--text-muted)">Sin resultados</td></tr>`;
+  document.getElementById('table-info').textContent=`Mostrando ${start+1}\u2013${end} de ${FMT.format(TABLE_SORTED.length)} registros`;
+  document.getElementById('page-info').textContent=`P&#225;g. ${PAGE+1}/${Math.max(1,Math.ceil(TABLE_SORTED.length/PAGE_SIZE))}`;
+  document.getElementById('btn-prev').disabled=PAGE===0;
+  document.getElementById('btn-next').disabled=end>=TABLE_SORTED.length;
+}
+function changePage(d){PAGE=Math.max(0,Math.min(PAGE+d,Math.ceil(TABLE_SORTED.length/PAGE_SIZE)-1));renderTable();document.getElementById('main-content').scrollTop=0;}
+function resetFilters(){['f-tributo','f-sector','f-categoria','f-predio','f-anio-ini','f-zona'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const fin=document.getElementById('f-anio-fin');if(fin&&fin.options.length>1)fin.value=fin.options[fin.options.length-1].value;document.getElementById('table-search').value='';applyFilters();toast('Filtros restablecidos','success');}
+const HEADS=["Clave Catastral","RMC","Contribuyente","Tributo","Sector","Barrio/Colonia","Tipo Predio","A\u00f1o Inicio","A\u00f1o Final","A\u00f1os Mora","Capital L.","Intereses L.","Total L.","Categor\u00eda","Modalidad","Zona","Archivo"];
+function getExportData(){const w=buildWhere();return qArr(`SELECT clave_catastral,rmc,nombre_contribuyente,_tributo,sector,barrio_colonia,tipo_predio,anio_inicio_mora,anio_final_mora,cantidad_anios_mora,CAST(REPLACE(COALESCE(saldo_capital,'0'),',','') AS REAL),CAST(REPLACE(COALESCE(intereses,'0'),',','') AS REAL),CAST(REPLACE(COALESCE(total_apagar,'0'),',','') AS REAL),categoria_morosidad,modalidad_cobro,clasificacion_zona,_archivo FROM cartera_mora ${w} ORDER BY CAST(REPLACE(COALESCE(total_apagar,'0'),',','') AS REAL) DESC LIMIT 100000`);}
+function exportCSV(){toast('Generando CSV...','success');const rows=getExportData();const csv=[HEADS.join(','),...rows.map(r=>r.map(v=>{if(v==null)return'';const s=String(v).split('"').join('""');return/[,"\n]/.test(s)?`"${s}"`:s;}).join(','))].join('\n');dl(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}),`cartera_mora_${dtag()}.csv`);toast('CSV descargado','success');}
+function exportExcel(){toast('Generando Excel...','success');const rows=getExportData();const ws=XLSX.utils.aoa_to_sheet([HEADS,...rows]);ws['!cols']=[{wch:16},{wch:14},{wch:36},{wch:22},{wch:20},{wch:28},{wch:16},{wch:10},{wch:10},{wch:10},{wch:16},{wch:16},{wch:18},{wch:18},{wch:18},{wch:18},{wch:40}];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Cartera');const w=buildWhere();const sr=DB.exec(`SELECT COUNT(*),SUM(CAST(REPLACE(COALESCE(saldo_capital,'0'),',','') AS REAL)),SUM(CAST(REPLACE(COALESCE(intereses,'0'),',','') AS REAL)),SUM(CAST(REPLACE(COALESCE(total_apagar,'0'),',','') AS REAL)) FROM cartera_mora ${w}`);if(sr.length){const[c,cap,i,t]=sr[0].values[0];const ws2=XLSX.utils.aoa_to_sheet([['Resumen de Exportaci\u00f3n'],['Fecha',new Date().toLocaleString('es-HN')],['Filtros',getFilterDesc()||'Ninguno'],[],['Total registros',c],['Capital L.',cap],['Intereses L.',i],['Gran Total L.',t]]);XLSX.utils.book_append_sheet(wb,ws2,'Resumen');}XLSX.writeFile(wb,`cartera_mora_${dtag()}.xlsx`);toast('Excel descargado','success');}
+function dtag(){const d=new Date();return d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2);}
+function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href);}
+let toastT;function toast(msg,type=''){const t=document.getElementById('toast');t.textContent=(type==='success'?'\u2713 ':'\u2716 ')+msg;t.className='show '+type;clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3000);}
+window.addEventListener('load',loadDB);
+
+/* ══════════════════════════════════════════════════════════════════
+   VISTA 2 — MAPA
+══════════════════════════════════════════════════════════════════ */
+let MAP = null;
+let DB_GEO = null;
+let MAP_MODE = 'puntos';    // 'puntos' | 'coropletico'
+let MAP_LAYERS = {};        // Leaflet layers by id
+let SECTOR_LAYER = null;    // Current cartera data layer
+let PENDING_GEOJSON = null; // SHP loaded but not saved yet
+let PENDING_FILENAME = '';
+
+// San Pedro Sula sector centroids (approximate)
+const SECTOR_CENTROIDS = {
+  'NOR-ESTE URBANO':   [15.515, -87.985],
+  'NOR-ESTE RURAL':    [15.555, -87.930],
+  'NOR-OESTE URBANO':  [15.515, -88.060],
+  'NOR-OESTE RURAL':   [15.560, -88.110],
+  'SUR-ESTE URBANO':   [15.480, -87.990],
+  'SUR-OESTE URBANO':  [15.478, -88.055],
+  'SUR-OESTE RURAL':   [15.440, -88.100],
+  'SECTOR NO CATASTRADO': [15.500, -88.026],
+  'SECTOR NO DEFINIDO':   [15.500, -88.026],
+};
+
+const DEUDA_COLORS = ['#1a3a2a','#0e4f35','#0d6940','#0a8a55','#08a86a','#f0a500','#e07800','#c85000','#a02020','#7a0000'];
+
+function getDeudaColor(val, max) {
+  if (!val || !max) return '#2a3447';
+  const idx = Math.min(9, Math.floor((val / max) * 10));
+  return DEUDA_COLORS[idx];
+}
+
+/* ── Init map when vista is activated ─────────────────────────── */
+function initMap() {
+  if (MAP) return;
+
+  MAP = L.map('leaflet-map', {
+    center: [15.5009, -88.0256],
+    zoom: 12,
+    zoomControl: true,
+  });
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19,
+  }).addTo(MAP);
+
+  // Populate map tributo filter
+  if (DB) {
+    const res = DB.exec("SELECT DISTINCT _tributo FROM cartera_mora WHERE _tributo IS NOT NULL ORDER BY _tributo");
+    const sel = document.getElementById('map-tributo');
+    if (res.length) res[0].values.forEach(r => sel.add(new Option(r[0], r[0])));
+  }
+
+  loadGeoDB().then(() => {
+    loadSavedLayers();
+    refreshMapData();
+  });
+}
+
+/* ── Load geodatos.db ─────────────────────────────────────────── */
+async function loadGeoDB() {
+  if (DB_GEO) return;
+  try {
+    const SQL = window._SQL || await initSqlJs({
+      locateFile: f => `lib/${f}`
+    });
+    window._SQL = SQL;
+    const resp = await fetch('geodatos.db');
+    if (!resp.ok) { console.warn('geodatos.db not found, starting fresh'); return; }
+    const buf = await resp.arrayBuffer();
+    DB_GEO = new SQL.Database(new Uint8Array(buf));
+  } catch(e) {
+    console.warn('Could not load geodatos.db:', e.message);
+  }
+}
+
+/* ── Refresh cartera data on map ──────────────────────────────── */
+function refreshMapData() {
+  if (!MAP || !DB) return;
+  showMapLoading(true);
+
+  if (SECTOR_LAYER) { MAP.removeLayer(SECTOR_LAYER); SECTOR_LAYER = null; }
+
+  const tributo = document.getElementById('map-tributo').value;
+  const campo   = document.getElementById('map-campo').value;
+  const tw = tributo ? `AND _tributo='${tributo.split("'").join("''")}'` : '';
+
+  const rows = DB.exec(`
+    SELECT sector,
+      COUNT(*) AS n,
+      COUNT(DISTINCT clave_catastral) AS predios,
+      COUNT(DISTINCT rmc) AS contribs,
+      SUM(CAST(REPLACE(COALESCE(total_apagar,'0'),',','') AS REAL)) AS total
+    FROM cartera_mora
+    WHERE sector IS NOT NULL AND sector != '' AND sector NOT LIKE 'ERROR%'
+    ${tw}
+    GROUP BY sector ORDER BY total DESC`);
+
+  if (!rows.length) { showMapLoading(false); return; }
+
+  const data = rows[0].values.map(r => ({
+    sector: r[0], n: r[1], predios: r[2], contribs: r[3], total: r[4]
+  }));
+
+  const maxVal = Math.max(...data.map(d => campo === 'total' ? d.total : campo === 'predios' ? d.predios : d.contribs));
+
+  if (MAP_MODE === 'puntos') {
+    drawPuntos(data, campo, maxVal);
+  } else {
+    drawCoropletico(data, campo, maxVal);
+  }
+
+  updateLegend(maxVal, campo);
+  showMapLoading(false);
+}
+
+function drawPuntos(data, campo, maxVal) {
+  const layers = [];
+  data.forEach(d => {
+    const coord = SECTOR_CENTROIDS[d.sector];
+    if (!coord) return;
+    const val = campo === 'total' ? d.total : campo === 'predios' ? d.predios : d.contribs;
+    const r   = Math.max(18, Math.min(60, (val / maxVal) * 60));
+    const col = getDeudaColor(val, maxVal);
+
+    const circle = L.circleMarker(coord, {
+      radius: r, fillColor: col, color: '#0d1117',
+      weight: 2, fillOpacity: 0.82,
+    });
+
+    circle.bindPopup(makePopup(d));
+    circle.on('click', () => updateZoneKPIs(d));
+    layers.push(circle);
+  });
+  SECTOR_LAYER = L.layerGroup(layers).addTo(MAP);
+}
+
+function drawCoropletico(data, campo, maxVal) {
+  // For choropleth without user SHP: draw rectangles at sector positions
+  const layers = [];
+  data.forEach(d => {
+    const coord = SECTOR_CENTROIDS[d.sector];
+    if (!coord) return;
+    const val = campo === 'total' ? d.total : campo === 'predios' ? d.predios : d.contribs;
+    const col = getDeudaColor(val, maxVal);
+    const size = 0.03;
+
+    const bounds = [
+      [coord[0] - size, coord[1] - size],
+      [coord[0] + size, coord[1] + size]
+    ];
+
+    const rect = L.rectangle(bounds, {
+      fillColor: col, color: '#0d1117',
+      weight: 1, fillOpacity: 0.75,
+    });
+
+    rect.bindPopup(makePopup(d));
+    rect.on('click', () => updateZoneKPIs(d));
+    layers.push(rect);
+  });
+  SECTOR_LAYER = L.layerGroup(layers).addTo(MAP);
+}
+
+function makePopup(d) {
+  const FN = new Intl.NumberFormat('es-HN', {minimumFractionDigits:0});
+  const FM = new Intl.NumberFormat('es-HN', {minimumFractionDigits:2});
+  return `
+    <div style="font-family:'Barlow Condensed',sans-serif;">
+      <div style="font-size:15px;font-weight:800;color:#f0a500;margin-bottom:6px;">${d.sector}</div>
+      <div style="font-size:11px;color:#8b949e;margin-bottom:2px;">Gran Total Deuda</div>
+      <div style="font-size:18px;font-weight:700;color:#e6edf3;margin-bottom:8px;">L. ${FM.format(d.total)}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px;">
+        <div style="color:#8b949e;">Registros</div><div style="color:#e6edf3;font-family:'JetBrains Mono'">${FN.format(d.n)}</div>
+        <div style="color:#8b949e;">Predios</div><div style="color:#00b4a6;font-family:'JetBrains Mono'">${FN.format(d.predios)}</div>
+        <div style="color:#8b949e;">Contribuyentes</div><div style="color:#4a9eff;font-family:'JetBrains Mono'">${FN.format(d.contribs)}</div>
+      </div>
+    </div>`;
+}
+
+function updateZoneKPIs(d) {
+  const FM = new Intl.NumberFormat('es-HN', {minimumFractionDigits:2});
+  const FN = new Intl.NumberFormat('es-HN', {minimumFractionDigits:0});
+  document.getElementById('map-zona-title').textContent = d.sector;
+  document.getElementById('mz-total').textContent   = 'L. ' + (d.total >= 1e6 ? (d.total/1e6).toFixed(2)+' M' : FM.format(d.total));
+  document.getElementById('mz-predios').textContent  = FN.format(d.predios);
+  document.getElementById('mz-contribs').textContent = FN.format(d.contribs);
+}
+
+function updateLegend(maxVal, campo) {
+  const unit = campo === 'total' ? 'L. M' : '';
+  const divs  = ['0', '20%', '40%', '60%', '80%', '100%'];
+  const items = divs.map((pct, i) => {
+    const v = (maxVal * i/5);
+    const label = campo === 'total' ? (v/1e6).toFixed(1)+' M' : Math.round(v).toLocaleString('es-HN');
+    return `<div class="legend-item"><div class="legend-swatch" style="background:${DEUDA_COLORS[Math.min(9,i*2)]}"></div>${label}</div>`;
+  }).join('');
+  document.getElementById('legend-items').innerHTML = items;
+}
+
+/* ── Mode toggle ───────────────────────────────────────────────── */
+function setModo(modo) {
+  MAP_MODE = modo;
+  document.getElementById('modo-puntos').classList.toggle('active', modo === 'puntos');
+  document.getElementById('modo-coro').classList.toggle('active', modo === 'coropletico');
+  refreshMapData();
+}
+
+/* ── GEO PANEL ─────────────────────────────────────────────────── */
+function openGeoPanel() {
+  document.getElementById('geo-panel').classList.add('geo-panel-open');
+  loadGeoLayersList();
+}
+function closeGeoPanel() {
+  document.getElementById('geo-panel').classList.remove('geo-panel-open');
+}
+
+/* ── File handling ──────────────────────────────────────────────── */
+function handleFileInput(e) {
+  if (e.target.files[0]) loadZIP(e.target.files[0]);
+}
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) loadZIP(e.dataTransfer.files[0]);
+}
+
+async function loadZIP(file) {
+  PENDING_FILENAME = file.name;
+  document.getElementById('layer-preview').textContent = 'Procesando archivo...';
+  document.getElementById('layer-form').style.display = 'block';
+  document.getElementById('lf-nombre').value = file.name.replace(/\.zip$/i,'');
+
+  try {
+    if (!window.shp) {
+      await loadScript('lib/shp.min.js');
+    }
+
+    const arrayBuffer = await file.arrayBuffer();
+    let geojson;
+
+    // Try shpjs
+    if (window.shp) {
+      geojson = await shp(arrayBuffer);
+    } else {
+      throw new Error('Librería de Shapefiles no disponible. Verifique conexión a internet.');
+    }
+
+    PENDING_GEOJSON = geojson;
+    const numFeatures = geojson.features ? geojson.features.length : 0;
+    const geomType    = geojson.features && geojson.features[0] ?
+      geojson.features[0].geometry.type : 'Desconocido';
+
+    document.getElementById('layer-preview').innerHTML =
+      `<span style="color:var(--green)">&#10003;</span> ${numFeatures} geometrías cargadas (${geomType})`;
+
+  } catch(err) {
+    console.error(err);
+    PENDING_GEOJSON = null;
+    document.getElementById('layer-preview').innerHTML =
+      `<span style="color:var(--red)">&#10007;</span> Error: ${err.message}`;
+  }
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+/* ── Save layer to geodatos.db ──────────────────────────────────── */
+async function saveLayer() {
+  if (!PENDING_GEOJSON) { toast('Primero cargue un archivo ZIP con Shapefile.', 'error'); return; }
+
+  const nombre = document.getElementById('lf-nombre').value.trim() || 'Nueva capa';
+  const desc   = document.getElementById('lf-desc').value.trim();
+  const color  = document.getElementById('lf-color').value;
+  const opac   = parseFloat(document.getElementById('lf-opacidad').value);
+
+  const gj        = PENDING_GEOJSON;
+  const features  = gj.features || [];
+  const geomType  = features[0]?.geometry?.type || 'Unknown';
+  const gjStr     = JSON.stringify(gj);
+
+  // Compute bbox
+  let minX=180,minY=90,maxX=-180,maxY=-90;
+  features.forEach(f => {
+    const coords = getAllCoords(f.geometry);
+    coords.forEach(([lng, lat]) => {
+      if (lng < minX) minX = lng; if (lng > maxX) maxX = lng;
+      if (lat < minY) minY = lat; if (lat > maxY) maxY = lat;
+    });
+  });
+
+  // If we don't have a persistent geodatos.db yet, create in-memory
+  if (!DB_GEO) {
+    const SQL = window._SQL;
+    DB_GEO = new SQL.Database();
+    DB_GEO.run(`CREATE TABLE IF NOT EXISTS capas_geo (
+      id_capa INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre TEXT, descripcion TEXT, tipo_geometria TEXT,
+      color TEXT DEFAULT '#f0a500', opacidad REAL DEFAULT 0.6,
+      visible INTEGER DEFAULT 1, orden INTEGER DEFAULT 0,
+      geojson TEXT, archivo_origen TEXT, num_features INTEGER DEFAULT 0,
+      bbox_minx REAL, bbox_miny REAL, bbox_maxx REAL, bbox_maxy REAL,
+      cargado_en TEXT DEFAULT CURRENT_TIMESTAMP)`);
+  }
+
+  DB_GEO.run(
+    `INSERT INTO capas_geo (nombre, descripcion, tipo_geometria, color, opacidad, geojson, archivo_origen, num_features, bbox_minx, bbox_miny, bbox_maxx, bbox_maxy)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+    [nombre, desc, geomType, color, opac, gjStr, PENDING_FILENAME, features.length, minX, minY, maxX, maxY]
+  );
+
+  // Render the layer on map
+  addGeoJSONToMap(gj, nombre, color, opac, DB_GEO.exec('SELECT last_insert_rowid()')[0].values[0][0]);
+
+  // Download updated geodatos.db for persistence
+  exportGeoDB();
+
+  cancelLayer();
+  loadGeoLayersList();
+  toast(`Capa "${nombre}" guardada — ${features.length} geometrías`, 'success');
+}
+
+function getAllCoords(geom) {
+  const type = geom.type;
+  if (type === 'Point') return [geom.coordinates];
+  if (type === 'LineString' || type === 'MultiPoint') return geom.coordinates;
+  if (type === 'Polygon' || type === 'MultiLineString') return geom.coordinates.flat();
+  if (type === 'MultiPolygon') return geom.coordinates.flat(2);
+  return [];
+}
+
+function cancelLayer() {
+  PENDING_GEOJSON = null;
+  document.getElementById('layer-form').style.display = 'none';
+  document.getElementById('layer-preview').textContent = '';
+  document.getElementById('shp-input').value = '';
+}
+
+/* ── Render saved layers on map ─────────────────────────────────── */
+function loadSavedLayers() {
+  if (!DB_GEO) return;
+  const rows = DB_GEO.exec("SELECT id_capa,nombre,tipo_geometria,color,opacidad,visible,geojson,num_features,bbox_minx,bbox_miny,bbox_maxx,bbox_maxy FROM capas_geo ORDER BY orden,id_capa");
+  if (!rows.length) return;
+  rows[0].values.forEach(r => {
+    const [id, nombre, tipo, color, opac, visible, gjStr, nf, mnx, mny, mxx, mxy] = r;
+    if (visible) {
+      try {
+        const gj = JSON.parse(gjStr);
+        addGeoJSONToMap(gj, nombre, color, opac, id);
+      } catch(e) { console.warn('Error parsing layer', id, e); }
+    }
+  });
+  loadGeoLayersList();
+}
+
+function addGeoJSONToMap(gj, nombre, color, opac, id) {
+  if (MAP_LAYERS[id]) { MAP.removeLayer(MAP_LAYERS[id]); }
+  const lyr = L.geoJSON(gj, {
+    style: { color: '#0d1117', weight: 1, fillColor: color, fillOpacity: opac },
+    pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: 5, fillColor: color, color: '#fff', weight: 1, fillOpacity: opac }),
+    onEachFeature: (f, layer) => {
+      const props = f.properties || {};
+      const propHtml = Object.entries(props).slice(0, 6)
+        .map(([k,v]) => `<tr><td style="color:#8b949e;padding-right:8px;font-size:10px">${k}</td><td style="color:#e6edf3;font-size:10px">${v}</td></tr>`).join('');
+      layer.bindPopup(`<div style="font-family:'Barlow Condensed',sans-serif;"><div style="font-size:13px;font-weight:700;color:#f0a500;margin-bottom:6px;">${nombre}</div><table>${propHtml}</table></div>`);
+    }
+  }).addTo(MAP);
+  MAP_LAYERS[id] = lyr;
+}
+
+/* ── Layers list in geo panel ───────────────────────────────────── */
+function loadGeoLayersList() {
+  const container = document.getElementById('geo-layers-list');
+  const sidebar   = document.getElementById('layers-list');
+
+  if (!DB_GEO) {
+    container.innerHTML = '<div style="font-size:11px;color:var(--text-muted);">Base de datos no cargada.</div>';
+    return;
+  }
+
+  const rows = DB_GEO.exec("SELECT id_capa,nombre,tipo_geometria,color,opacidad,visible,num_features FROM capas_geo ORDER BY orden,id_capa");
+
+  if (!rows.length || !rows[0].values.length) {
+    container.innerHTML = '<div style="font-size:11px;color:var(--text-muted);">No hay capas guardadas aún.</div>';
+    sidebar.innerHTML   = '<div style="font-size:11px;color:var(--text-muted);">Sin capas. Use el botón + para cargar un ZIP con Shapefile.</div>';
+    return;
+  }
+
+  const makeItem = (r, inPanel) => {
+    const [id, nombre, tipo, color, opac, visible, nf] = r;
+    return `
+      <div class="layer-item" id="li-${id}-${inPanel?'p':'s'}">
+        <div class="layer-swatch" style="background:${color}"></div>
+        <div class="layer-info">
+          <div class="layer-name">${nombre}</div>
+          <div class="layer-meta">${tipo || '?'} · ${nf} geometrías</div>
+        </div>
+        <div class="layer-controls">
+          <button class="btn-icon" title="${visible?'Ocultar':'Mostrar'}" onclick="toggleLayer(${id})">${visible?'👁':'👁️‍🗨️'}</button>
+          ${inPanel ? `<button class="btn-icon" style="color:var(--red)" title="Eliminar" onclick="deleteLayer(${id})">&#x2715;</button>` : ''}
+        </div>
+      </div>`;
+  };
+
+  container.innerHTML = rows[0].values.map(r => makeItem(r, true)).join('');
+  sidebar.innerHTML   = rows[0].values.map(r => makeItem(r, false)).join('');
+}
+
+function toggleLayer(id) {
+  if (!DB_GEO) return;
+  DB_GEO.run("UPDATE capas_geo SET visible = CASE WHEN visible=1 THEN 0 ELSE 1 END WHERE id_capa=?", [id]);
+  const vis = DB_GEO.exec("SELECT visible FROM capas_geo WHERE id_capa=?", [id])[0].values[0][0];
+  if (vis) {
+    const gjStr = DB_GEO.exec("SELECT geojson,nombre,color,opacidad FROM capas_geo WHERE id_capa=?", [id])[0].values[0];
+    addGeoJSONToMap(JSON.parse(gjStr[0]), gjStr[1], gjStr[2], gjStr[3], id);
+  } else {
+    if (MAP_LAYERS[id]) { MAP.removeLayer(MAP_LAYERS[id]); delete MAP_LAYERS[id]; }
+  }
+  exportGeoDB();
+  loadGeoLayersList();
+}
+
+function deleteLayer(id) {
+  if (!confirm('¿Eliminar esta capa permanentemente?')) return;
+  if (MAP_LAYERS[id]) { MAP.removeLayer(MAP_LAYERS[id]); delete MAP_LAYERS[id]; }
+  DB_GEO.run("DELETE FROM capas_geo WHERE id_capa=?", [id]);
+  exportGeoDB();
+  loadGeoLayersList();
+  toast('Capa eliminada', 'success');
+}
+
+/* ── Export geodatos.db (download for persistence) ──────────────── */
+function exportGeoDB() {
+  if (!DB_GEO) return;
+  // Download updated DB so user can replace the file for persistence
+  try {
+    const data = DB_GEO.export();
+    const blob = new Blob([data], { type: 'application/octet-stream' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'geodatos.db';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } catch(e) { console.warn('Could not export geodatos.db:', e); }
+}
+
+/* ── Map loading indicator ──────────────────────────────────────── */
+function showMapLoading(show) {
+  document.getElementById('map-loading').style.display = show ? 'flex' : 'none';
+}
+
+/* ── Activate map when tab clicked — override ─────────────────── */
+const _switchVistaBase = (id) => {
+  document.querySelectorAll('.vista').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.vtab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('vista-'+id).classList.add('active');
+  document.getElementById('vtab-'+id).classList.add('active');
+};
+function switchVista(id) {
+  _switchVistaBase(id);
+  if (id === 'mapa') {
+    setTimeout(() => { initMap(); if (MAP) MAP.invalidateSize(); }, 80);
+  }
+}
+
+
+/* ══════════════════════════════════════════════════════════════════
+   VISTA 3 — GESTIÓN DE COBROS
+══════════════════════════════════════════════════════════════════ */
+
+let DB_COB = null;          // gestion_cobros.db (sql.js instance)
+let COB_ALL = [];           // full filtered rows
+let COB_SORTED = [];        // after search
+let COB_PAGE = 0;
+const COB_PAGE_SIZE = 50;
+let COB_SORT_IDX = 0;
+let COB_SORT_ASC = false;
+let COB_EDITING_ID = null;  // id_gestion being edited for estado update
+
+const FMT_COB = new Intl.NumberFormat('es-HN', {minimumFractionDigits:2, maximumFractionDigits:2});
+const FMT_N   = new Intl.NumberFormat('es-HN', {minimumFractionDigits:0});
+
+/* ── Load gestion_cobros.db ─────────────────────────────────────── */
+async function initCobros() {
+  if (DB_COB) { cobPopulateGestores(); cobLoadMotivos(); cobRefresh(); return; }
+  try {
+    const SQL = window._SQL || await initSqlJs({
+      locateFile: f => `lib/${f}`
+    });
+    window._SQL = SQL;
+    const resp = await fetch('gestion_cobros.db');
+    if (!resp.ok) {
+      // Create in-memory DB if file not served yet
+      DB_COB = new SQL.Database();
+      cobCreateSchema();
+    } else {
+      const buf = await resp.arrayBuffer();
+      DB_COB = new SQL.Database(new Uint8Array(buf));
+    }
+    cobPopulateGestores();
+    cobLoadMotivos();
+    cobRefresh();
+  } catch(e) {
+    console.error('Error cargando gestion_cobros.db:', e);
+    toast('Error cargando BD de gestiones: ' + e.message, 'error');
+  }
+}
+
+function cobCreateSchema() {
+  DB_COB.run(`CREATE TABLE IF NOT EXISTS gestiones (
+    id_gestion INTEGER PRIMARY KEY AUTOINCREMENT,
+    fecha_gestion TEXT NOT NULL,
+    clave_catastral TEXT, rmc TEXT, nombre_contribuyente TEXT, tributo TEXT,
+    canal_contacto TEXT, resultado TEXT, id_motivo INTEGER, motivo_libre TEXT,
+    monto_comprometido REAL DEFAULT 0, fecha_compromiso TEXT,
+    id_gestor INTEGER, gestor_nombre TEXT, observaciones TEXT,
+    estado_seguimiento TEXT DEFAULT 'PENDIENTE',
+    creado_en TEXT DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TEXT DEFAULT CURRENT_TIMESTAMP
+  )`);
+  DB_COB.run(`CREATE TABLE IF NOT EXISTS acuerdos_pago (
+    id_acuerdo INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_gestion INTEGER, clave_catastral TEXT, rmc TEXT,
+    nombre_contribuyente TEXT, tributo TEXT,
+    monto_total_acuerdo REAL DEFAULT 0, cuotas_pactadas INTEGER DEFAULT 1,
+    valor_cuota REAL DEFAULT 0, fecha_inicio TEXT, fecha_fin_estimada TEXT,
+    estado_acuerdo TEXT DEFAULT 'ACTIVO', gestor_nombre TEXT,
+    observaciones TEXT, creado_en TEXT DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TEXT DEFAULT CURRENT_TIMESTAMP
+  )`);
+  DB_COB.run(`CREATE TABLE IF NOT EXISTS motivos_catalogo (
+    id_motivo INTEGER PRIMARY KEY AUTOINCREMENT,
+    motivo TEXT NOT NULL UNIQUE, activo INTEGER DEFAULT 1
+  )`);
+  // Seed motivos
+  const motivos = [
+    'Disminucion de ingresos','Desempleo','Calamidad domestica',
+    'Otras obligaciones financieras','No le han pagado (terceros)',
+    'Dificultad en canales de pago','Encargado del pago es un tercero',
+    'Desacuerdo con el monto','No llegan extractos / notificaciones',
+    'Olvido','Falta de tiempo','Esta de viaje',
+    'Ciclo de facturacion / fechas de pago','Desconoce motivo de mora',
+    'No tiene voluntad de pago','En proceso judicial',
+    'Predio en disputa legal','Deudor fallecido','Sin respuesta'
+  ];
+  motivos.forEach(m => DB_COB.run(
+    'INSERT OR IGNORE INTO motivos_catalogo (motivo) VALUES (?)', [m]
+  ));
+}
+
+function cobQArr(sql, params) {
+  const r = DB_COB.exec(sql, params);
+  return r.length ? r[0].values : [];
+}
+
+/* ── Populate selects ───────────────────────────────────────────── */
+function cobPopulateGestores() {
+  const sel = document.getElementById('cob-f-gestor');
+  const rows = cobQArr('SELECT DISTINCT gestor_nombre FROM gestiones WHERE gestor_nombre IS NOT NULL ORDER BY gestor_nombre');
+  rows.forEach(r => { if(r[0]) sel.add(new Option(r[0], r[0])); });
+}
+
+function cobLoadMotivos() {
+  const sel = document.getElementById('gf-motivo');
+  const rows = cobQArr('SELECT id_motivo, motivo FROM motivos_catalogo WHERE activo=1 ORDER BY motivo');
+  rows.forEach(r => sel.add(new Option(r[1], r[0])));
+}
+
+/* ── KPI update ─────────────────────────────────────────────────── */
+function cobUpdateKPIs(where) {
+  const r = DB_COB.exec(`
+    SELECT
+      COUNT(*),
+      SUM(CASE WHEN resultado NOT IN ('No contactado','Sin respuesta') THEN 1 ELSE 0 END),
+      SUM(CASE WHEN resultado='Promesa de pago' THEN 1 ELSE 0 END),
+      SUM(CASE WHEN estado_seguimiento='CUMPLIÓ' THEN 1 ELSE 0 END)
+    FROM gestiones ${where}`);
+  if (!r.length) return;
+  const [tot, cont, prom, cum] = r[0].values[0];
+  document.getElementById('cob-k-total').textContent = FMT_N.format(tot || 0);
+  const tc = tot ? Math.round((cont||0)/tot*100) : 0;
+  const tp = tot ? Math.round((prom||0)/tot*100) : 0;
+  const tcu = prom ? Math.round((cum||0)/prom*100) : 0;
+  document.getElementById('cob-k-contacto').textContent = tc + '%';
+  document.getElementById('cob-k-promesa').textContent  = tp + '%';
+  document.getElementById('cob-k-cumplimiento').textContent = tcu + '%';
+}
+
+/* ── Filter builder ─────────────────────────────────────────────── */
+function cobBuildWhere() {
+  const c = [];
+  const canal     = document.getElementById('cob-f-canal').value;
+  const resultado = document.getElementById('cob-f-resultado').value;
+  const estado    = document.getElementById('cob-f-estado').value;
+  const gestor    = document.getElementById('cob-f-gestor').value;
+  const desde     = document.getElementById('cob-f-desde').value;
+  const hasta     = document.getElementById('cob-f-hasta').value;
+  if (canal)     c.push("canal_contacto='"     + canal.split("'").join("''")     + "'");
+  if (resultado) c.push("resultado='"          + resultado.split("'").join("''") + "'");
+  if (estado)    c.push("estado_seguimiento='" + estado.split("'").join("''")    + "'");
+  if (gestor)    c.push("gestor_nombre='"      + gestor.split("'").join("''")    + "'");
+  if (desde)     c.push("DATE(fecha_gestion) >= '" + desde + "'");
+  if (hasta)     c.push("DATE(fecha_gestion) <= '" + hasta + "'");
+  return "WHERE 1=1" + (c.length ? " AND " + c.join(" AND ") : "");
+}
+
+/* ── Main refresh ───────────────────────────────────────────────── */
+function cobRefresh() {
+  if (!DB_COB) return;
+  const w = cobBuildWhere();
+  cobUpdateKPIs(w);
+
+  COB_ALL = cobQArr(`
+    SELECT id_gestion, fecha_gestion, clave_catastral, rmc,
+           nombre_contribuyente, tributo, canal_contacto, resultado,
+           monto_comprometido, fecha_compromiso, estado_seguimiento,
+           gestor_nombre, observaciones
+    FROM gestiones ${w}
+    ORDER BY fecha_gestion DESC LIMIT 5000`);
+  COB_SORTED = [...COB_ALL];
+  cobFilterTable();
+  cobLoadCompromisos(w);
+  cobLoadAcuerdos();
+}
+
+/* ── Table render ───────────────────────────────────────────────── */
+function cobFilterTable() {
+  const q = (document.getElementById('cob-search').value || '').toLowerCase().trim();
+  COB_SORTED = q ? COB_ALL.filter(r =>
+    [r[2],r[3],r[4],r[5],r[6],r[7]].some(v => v && String(v).toLowerCase().includes(q))
+  ) : [...COB_ALL];
+  COB_PAGE = 0;
+  cobSortCurrentData();
+}
+
+function cobSortTable(col) {
+  if (COB_SORT_IDX === col) COB_SORT_ASC = !COB_SORT_ASC;
+  else { COB_SORT_IDX = col; COB_SORT_ASC = false; }
+  cobSortCurrentData();
+}
+
+function cobSortCurrentData() {
+  COB_SORTED.sort((a, b) => {
+    const va = a[COB_SORT_IDX], vb = b[COB_SORT_IDX];
+    if (va == null) return 1; if (vb == null) return -1;
+    const n = COB_SORT_IDX === 8
+      ? (parseFloat(va)||0) - (parseFloat(vb)||0)
+      : String(va).localeCompare(String(vb));
+    return COB_SORT_ASC ? n : -n;
+  });
+  COB_PAGE = 0;
+  cobRenderTable();
+}
+
+const ESTADO_PILL = {
+  'PENDIENTE': 'pill-pendiente',
+  'CUMPLIÓ':   'pill-cumplio',
+  'INCUMPLIÓ': 'pill-incumplio',
+  'EN ACUERDO':'pill-acuerdo',
+};
+
+function cobRenderTable() {
+  const start = COB_PAGE * COB_PAGE_SIZE;
+  const end   = Math.min(start + COB_PAGE_SIZE, COB_SORTED.length);
+  const rows  = COB_SORTED.slice(start, end);
+
+  const tbody = document.getElementById('cob-table-body');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:40px;">Sin gestiones registradas aún.<br><small>Use "+ Nueva Gestión" para registrar la primera.</small></td></tr>';
+  } else {
+    tbody.innerHTML = rows.map(r => {
+      const [id, fecha, cat, rmc, nombre, trib, canal, resultado, monto, fcomp, estado, gestor, obs] = r;
+      const pill  = ESTADO_PILL[estado] || 'pill-tri';
+      const fShort = fecha ? fecha.slice(0,10) : '—';
+      const fcShort = fcomp || '—';
+      return `<tr>
+        <td style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);">${fShort}</td>
+        <td><code style="font-size:10px;color:var(--teal);">${cat||'—'}</code></td>
+        <td class="tc" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;">${nombre||'—'}</td>
+        <td><span class="pill pill-tri" style="font-size:9px;">${(trib||'').replace(' Y COMERCIO','').replace(' PERSONAL','').replace('SERVICIOS ','SRV.')}</span></td>
+        <td style="font-size:11px;color:var(--text-secondary);">${canal||'—'}</td>
+        <td style="font-size:11px;color:var(--text-primary);">${resultado||'—'}</td>
+        <td class="tr" style="color:var(--amber);font-family:var(--font-mono);font-size:11px;">${monto ? 'L. '+FMT_COB.format(monto) : '—'}</td>
+        <td style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);">${fcShort}</td>
+        <td><span class="pill ${pill}" style="font-size:9px;">${(estado||'—').replace('CUMPLIÓ','CUMPLIÓ').replace('INCUMPLIÓ','INCU.')}</span></td>
+        <td style="font-size:11px;color:var(--text-secondary);">${gestor||'—'}</td>
+        <td>
+          <button class="btn-icon" title="Actualizar estado" onclick="openEstadoForm(${id},'${estado||'PENDIENTE'}')">✎</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  const total = COB_SORTED.length;
+  document.getElementById('cob-rec-count').textContent = FMT_N.format(total) + ' registros';
+  document.getElementById('cob-table-info').textContent =
+    total ? `Mostrando ${start+1}–${end} de ${FMT_N.format(total)}` : '';
+  document.getElementById('cob-page-info').textContent =
+    `Pág. ${COB_PAGE+1}/${Math.max(1, Math.ceil(total/COB_PAGE_SIZE))}`;
+  document.getElementById('cob-btn-prev').disabled = COB_PAGE === 0;
+  document.getElementById('cob-btn-next').disabled = end >= total;
+}
+
+function cobChangePage(d) {
+  COB_PAGE = Math.max(0, Math.min(COB_PAGE + d, Math.ceil(COB_SORTED.length/COB_PAGE_SIZE)-1));
+  cobRenderTable();
+}
+
+/* ── Compromisos ────────────────────────────────────────────────── */
+function cobLoadCompromisos(w) {
+  const rows = cobQArr(`
+    SELECT id_gestion, fecha_gestion, clave_catastral, rmc,
+           nombre_contribuyente, tributo,
+           monto_comprometido, fecha_compromiso,
+           gestor_nombre,
+           CAST(JULIANDAY('now') - JULIANDAY(fecha_compromiso) AS INTEGER) AS dias
+    FROM gestiones
+    WHERE resultado='Promesa de pago'
+      AND estado_seguimiento='PENDIENTE'
+      AND fecha_compromiso IS NOT NULL
+    ORDER BY fecha_compromiso`);
+
+  const tbody = document.getElementById('cob-compromisos-body');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:40px;">Sin compromisos pendientes — ¡excelente!</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const [id, fecha, cat, rmc, nombre, trib, monto, fcomp, gestor, dias] = r;
+    let diasHtml;
+    if (dias === null || fcomp === null) {
+      diasHtml = '<span class="dias-ok">—</span>';
+    } else if (dias < 0) {
+      diasHtml = `<span class="dias-ok">En ${Math.abs(dias)} d.</span>`;
+    } else if (dias <= 3) {
+      diasHtml = `<span class="dias-warn">Vence hoy/pronto</span>`;
+    } else {
+      diasHtml = `<span class="dias-late">+${dias} días</span>`;
+    }
+    return `<tr>
+      <td style="font-family:var(--font-mono);font-size:10px;">${(fecha||'').slice(0,10)}</td>
+      <td><code style="font-size:10px;color:var(--teal);">${cat||'—'}</code></td>
+      <td class="tc" style="max-width:150px;overflow:hidden;text-overflow:ellipsis;">${nombre||'—'}</td>
+      <td style="font-size:11px;">${(trib||'').replace(' Y COMERCIO','')}</td>
+      <td class="tr" style="color:var(--amber);font-family:var(--font-mono);font-size:11px;">L. ${FMT_COB.format(monto||0)}</td>
+      <td style="font-family:var(--font-mono);font-size:10px;">${fcomp||'—'}</td>
+      <td>${diasHtml}</td>
+      <td style="font-size:11px;">${gestor||'—'}</td>
+      <td>
+        <button class="btn-icon" onclick="openEstadoForm(${id},'PENDIENTE')" title="Actualizar estado">✎</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── Acuerdos ───────────────────────────────────────────────────── */
+function cobLoadAcuerdos() {
+  const rows = cobQArr(`
+    SELECT id_acuerdo, clave_catastral, nombre_contribuyente, tributo,
+           monto_total_acuerdo, cuotas_pactadas, valor_cuota,
+           fecha_inicio, estado_acuerdo, gestor_nombre
+    FROM acuerdos_pago ORDER BY creado_en DESC LIMIT 500`);
+
+  const tbody = document.getElementById('cob-acuerdos-body');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:40px;">Sin acuerdos de pago registrados.</td></tr>';
+    return;
+  }
+  const ACUERDO_PILL = {
+    'ACTIVO':     'pill-pendiente',
+    'CUMPLIDO':   'pill-cumplio',
+    'INCUMPLIDO': 'pill-incumplio',
+    'CANCELADO':  'pill-tri',
+  };
+  tbody.innerHTML = rows.map(r => {
+    const [id, cat, nombre, trib, total, cuotas, cuota, finicio, estado, gestor] = r;
+    return `<tr>
+      <td><code style="font-size:10px;color:var(--teal);">${cat||'—'}</code></td>
+      <td class="tc" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;">${nombre||'—'}</td>
+      <td style="font-size:11px;">${(trib||'').replace(' Y COMERCIO','')}</td>
+      <td class="tr" style="color:var(--amber);font-family:var(--font-mono);font-size:11px;">L. ${FMT_COB.format(total||0)}</td>
+      <td class="tr" style="font-family:var(--font-mono);font-size:11px;">${cuotas||1}</td>
+      <td class="tr" style="font-family:var(--font-mono);font-size:11px;">L. ${FMT_COB.format(cuota||0)}</td>
+      <td style="font-family:var(--font-mono);font-size:10px;">${finicio||'—'}</td>
+      <td><span class="pill ${ACUERDO_PILL[estado]||'pill-tri'}" style="font-size:9px;">${estado||'—'}</span></td>
+      <td style="font-size:11px;">${gestor||'—'}</td>
+      <td></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── Sub-tab switch ─────────────────────────────────────────────── */
+function cobSwitchTab(tab) {
+  document.querySelectorAll('.cob-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.cob-tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById(`ctab-${tab}`).classList.add('active');
+  document.getElementById(`ctab-content-${tab}`).classList.add('active');
+}
+
+/* ── Reset filtros ──────────────────────────────────────────────── */
+function cobResetFiltros() {
+  ['cob-f-canal','cob-f-resultado','cob-f-estado','cob-f-gestor',
+   'cob-f-desde','cob-f-hasta','cob-search'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  cobRefresh();
+}
+
+/* ── Nueva gestión modal ────────────────────────────────────────── */
+function openGestionForm(id) {
+  // Set default fecha to now
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset()*60000)
+    .toISOString().slice(0,16);
+  document.getElementById('gf-fecha').value = local;
+  document.getElementById('cob-modal-overlay').classList.add('open');
+}
+
+function closeGestionForm() {
+  document.getElementById('cob-modal-overlay').classList.remove('open');
+  // Clear form
+  ['gf-catastral','gf-rmc','gf-nombre','gf-monto','gf-obs','gf-gestor','gf-fecha-compromiso']
+    .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('gf-tributo').value = '';
+  document.getElementById('gf-resultado').value = 'Contactado';
+  document.getElementById('gf-motivo').value = '';
+  cobToggleCompromiso();
+}
+
+function cobToggleCompromiso() {
+  const resultado = document.getElementById('gf-resultado').value;
+  const show = resultado === 'Promesa de pago' || resultado === 'Acuerdo de pago';
+  document.getElementById('gf-compromiso-group').style.display  = show ? '' : 'none';
+  document.getElementById('gf-fecha-comp-group').style.display  = show ? '' : 'none';
+}
+
+/* ── Buscar en cartera para autocompletar ───────────────────────── */
+function cobBuscarCatastral() {
+  const cat = document.getElementById('gf-catastral').value.trim();
+  if (!cat || !DB) return;
+  const r = DB.exec(`
+    SELECT nombre_contribuyente, _tributo, rmc
+    FROM cartera_mora WHERE clave_catastral=? LIMIT 1`, [cat]);
+  if (r.length && r[0].values.length) {
+    const [nombre, trib, rmc] = r[0].values[0];
+    if (nombre) document.getElementById('gf-nombre').value = nombre;
+    if (trib)   document.getElementById('gf-tributo').value = trib;
+    if (rmc)    document.getElementById('gf-rmc').value = rmc;
+  }
+}
+
+/* ── Save gestión ───────────────────────────────────────────────── */
+function saveGestion() {
+  const cat     = document.getElementById('gf-catastral').value.trim();
+  const rmc     = document.getElementById('gf-rmc').value.trim();
+  const nombre  = document.getElementById('gf-nombre').value.trim();
+  const tributo = document.getElementById('gf-tributo').value;
+  const fecha   = document.getElementById('gf-fecha').value;
+  const canal   = document.getElementById('gf-canal').value;
+  const resultado = document.getElementById('gf-resultado').value;
+  const motivoId = document.getElementById('gf-motivo').value || null;
+  const monto   = parseFloat(document.getElementById('gf-monto').value) || 0;
+  const fcomp   = document.getElementById('gf-fecha-compromiso').value || null;
+  const obs     = document.getElementById('gf-obs').value.trim();
+  const gestor  = document.getElementById('gf-gestor').value.trim();
+  const now     = new Date().toISOString().slice(0,19).replace('T',' ');
+
+  if (!fecha) { toast('Indique la fecha de la gestión', 'error'); return; }
+  if (!canal)  { toast('Seleccione el canal de contacto', 'error'); return; }
+
+  DB_COB.run(`
+    INSERT INTO gestiones
+      (fecha_gestion, clave_catastral, rmc, nombre_contribuyente, tributo,
+       canal_contacto, resultado, id_motivo, monto_comprometido, fecha_compromiso,
+       gestor_nombre, observaciones, estado_seguimiento, creado_en, actualizado_en)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,'PENDIENTE',?,?)`,
+    [fecha.replace('T',' '), cat||null, rmc||null, nombre||null, tributo||null,
+     canal, resultado, motivoId, monto, fcomp, gestor||null, obs||null, now, now]
+  );
+
+  cobExportGestionDB();
+  closeGestionForm();
+  cobRefresh();
+  toast('Gestión registrada correctamente', 'success');
+}
+
+/* ── Update estado ──────────────────────────────────────────────── */
+function openEstadoForm(id, estadoActual) {
+  COB_EDITING_ID = id;
+  document.getElementById('ef-estado').value = estadoActual;
+  document.getElementById('ef-nota').value = '';
+  document.getElementById('cob-estado-overlay').classList.add('open');
+}
+
+function closeEstadoForm() {
+  document.getElementById('cob-estado-overlay').classList.remove('open');
+  COB_EDITING_ID = null;
+}
+
+function saveEstado() {
+  if (!COB_EDITING_ID) return;
+  const estado = document.getElementById('ef-estado').value;
+  const now = new Date().toISOString().slice(0,19).replace('T',' ');
+  DB_COB.run(
+    'UPDATE gestiones SET estado_seguimiento=?, actualizado_en=? WHERE id_gestion=?',
+    [estado, now, COB_EDITING_ID]
+  );
+  cobExportGestionDB();
+  closeEstadoForm();
+  cobRefresh();
+  toast('Estado actualizado: ' + estado, 'success');
+}
+
+/* ── Export CSV gestiones ───────────────────────────────────────── */
+function cobExportCSV() {
+  const w = cobBuildWhere();
+  const rows = cobQArr(`
+    SELECT fecha_gestion, clave_catastral, rmc, nombre_contribuyente,
+           tributo, canal_contacto, resultado, monto_comprometido,
+           fecha_compromiso, estado_seguimiento, gestor_nombre, observaciones
+    FROM gestiones ${w} ORDER BY fecha_gestion DESC`);
+  const heads = ['Fecha','Catastral','RMC','Contribuyente','Tributo',
+    'Canal','Resultado','Monto','Fecha compromiso','Estado','Gestor','Observaciones'];
+  const csv = [heads.join(','), ...rows.map(r =>
+    r.map(v => {
+      if (v==null) return '';
+      const s = String(v).split('"').join('""');
+      return /[,"\r\n]/.test(s) ? `"${s}"` : s;
+    }).join(',')
+  )].join('');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'}));
+  a.download = `gestiones_cobro_${cobDtag()}.csv`;
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('CSV de gestiones descargado', 'success');
+}
+
+function cobDtag() {
+  const d=new Date();
+  return d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2);
+}
+
+/* ── Persist gestion_cobros.db ──────────────────────────────────── */
+function cobExportGestionDB() {
+  if (!DB_COB) return;
+  try {
+    const data = DB_COB.export();
+    const blob = new Blob([data], {type:'application/octet-stream'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'gestion_cobros.db';
+    a.click(); URL.revokeObjectURL(a.href);
+  } catch(e) { console.warn('No se pudo exportar gestion_cobros.db:', e); }
+}
+
+/* ── Acuerdo form (placeholder) ─────────────────────────────────── */
+function openAcuerdoForm() {
+  toast('Formulario de acuerdos próximamente', 'success');
+}
+
+/* ── Hook into switchVista ──────────────────────────────────────── */
+const _cobSwitchBase = window.switchVista;
+window.switchVista = function(id) {
+  _cobSwitchBase ? _cobSwitchBase(id) : (()=>{
+    document.querySelectorAll('.vista').forEach(v=>v.classList.remove('active'));
+    document.querySelectorAll('.vtab').forEach(t=>t.classList.remove('active'));
+    document.getElementById('vista-'+id).classList.add('active');
+    document.getElementById('vtab-'+id).classList.add('active');
+  })();
+  if (id === 'cobros') setTimeout(() => initCobros(), 50);
+};
+
+</script>
+</body>
+</html>
