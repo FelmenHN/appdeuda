@@ -21,10 +21,10 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;overflow:hidden;}
-body{background:var(--bg-base);color:var(--text-primary);font-family:var(--font-body);font-size:14px;line-height:1.5;}
+body{display:flex;flex-direction:column;background:var(--bg-base);color:var(--text-primary);font-family:var(--font-body);font-size:14px;line-height:1.5;}
 
 /* TOPBAR */
-#topbar{position:fixed;top:0;left:0;right:0;z-index:200;height:var(--nav-h);background:var(--bg-surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:20px;}
+#topbar{position:sticky;top:0;z-index:200;flex-shrink:0;height:var(--nav-h);background:var(--bg-surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:20px;}
 .logo-mark{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0;}
 .logo-icon{width:32px;height:32px;background:var(--amber);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;font-family:var(--font-display);color:var(--bg-base);letter-spacing:-1px;}
 .logo-text{display:flex;flex-direction:column;line-height:1.1;}
@@ -47,7 +47,7 @@ body{background:var(--bg-base);color:var(--text-primary);font-family:var(--font-
 #last-update{font-size:11px;color:var(--text-muted);font-family:var(--font-mono);}
 
 /* LAYOUT */
-#app{display:flex;height:100vh;padding-top:var(--nav-h);}
+#app{display:flex;flex:1;min-height:0;overflow:hidden;}
 .vista{display:none;flex:1;overflow:hidden;}
 .vista.active{display:flex;}
 
@@ -57,6 +57,25 @@ body{background:var(--bg-base);color:var(--text-primary);font-family:var(--font-
 /* SIDEBAR */
 #sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--bg-surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
 .sidebar-section{padding:14px 16px 10px;border-bottom:1px solid var(--border);}
+/* Sección flex:1 del sidebar — la sección es el contenedor, el filter-group es el scrolleable */
+.sidebar-section.scrollable-section{
+  display:flex;flex-direction:column;overflow:hidden;
+  border-bottom:none; /* record-count ya tiene border-top */
+  padding-bottom:0;
+}
+.sidebar-section.scrollable-section .sidebar-label{
+  flex-shrink:0;padding-bottom:8px;
+  border-bottom:1px solid var(--border);margin-bottom:8px;
+}
+.sidebar-section.scrollable-section .filter-group{
+  flex:1;overflow-y:auto;min-height:0;padding-bottom:10px;
+}
+.sidebar-section.scrollable-section .filter-group::-webkit-scrollbar{width:4px;}
+.sidebar-section.scrollable-section .filter-group::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+#record-count{padding:10px 16px;font-size:11px;color:var(--text-muted);
+  font-family:var(--font-mono);border-top:1px solid var(--border);
+  background:var(--bg-base);display:flex;align-items:center;
+  justify-content:space-between;flex-shrink:0;}
 .sidebar-label{font-family:var(--font-display);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;}
 .kpi-stack{display:flex;flex-direction:column;gap:6px;}
 .kpi-mini{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;display:flex;flex-direction:column;gap:1px;position:relative;overflow:hidden;}
@@ -80,7 +99,64 @@ body{background:var(--bg-base);color:var(--text-primary);font-family:var(--font-
 .year-range span{font-size:11px;color:var(--text-muted);font-family:var(--font-mono);}
 .btn-reset{width:100%;padding:8px;background:transparent;border:1px solid var(--border);border-radius:var(--radius);color:var(--text-secondary);font-family:var(--font-display);font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .18s;margin-top:4px;}
 .btn-reset:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-glow);}
-#record-count{padding:10px 16px;font-size:11px;color:var(--text-muted);font-family:var(--font-mono);border-top:1px solid var(--border);background:var(--bg-base);display:flex;align-items:center;justify-content:space-between;}
+
+/* ── Búsqueda avanzada ────────────────────────────────────────── */
+.adv-search-toggle{display:flex;align-items:center;gap:6px;width:100%;background:none;
+  border:1px dashed var(--border);border-radius:var(--radius);padding:7px 10px;
+  color:var(--text-muted);font-family:var(--font-display);font-size:11px;font-weight:600;
+  letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .18s;margin-top:4px;}
+.adv-search-toggle:hover{border-color:var(--amber);color:var(--amber);}
+.adv-search-toggle .adv-arrow{margin-left:auto;transition:transform .2s;font-style:normal;}
+.adv-search-toggle.open .adv-arrow{transform:rotate(180deg);}
+.adv-search-panel{display:none;flex-direction:column;gap:8px;
+  border:1px solid var(--border);border-radius:var(--radius);
+  padding:10px;background:var(--bg-base);margin-top:4px;}
+.adv-search-panel.open{display:flex;}
+.adv-search-input{background:var(--bg-elevated);border:1px solid var(--border);
+  border-radius:var(--radius);color:var(--text-primary);padding:7px 10px;
+  font-family:var(--font-body);font-size:12px;outline:none;width:100%;
+  box-sizing:border-box;transition:border-color .18s;}
+.adv-search-input:focus{border-color:var(--amber);}
+.adv-search-input::placeholder{color:var(--text-muted);}
+.adv-btn-row{display:flex;gap:6px;margin-top:2px;}
+.btn-adv-search{flex:1;padding:7px 0;background:var(--amber);border:none;
+  border-radius:var(--radius);color:var(--bg-base);font-family:var(--font-display);
+  font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;
+  transition:opacity .18s;}
+.btn-adv-search:hover{opacity:.85;}
+.btn-adv-clear{padding:7px 10px;background:none;border:1px solid var(--border);
+  border-radius:var(--radius);color:var(--text-muted);font-family:var(--font-display);
+  font-size:11px;font-weight:600;letter-spacing:.5px;cursor:pointer;transition:all .18s;}
+.btn-adv-clear:hover{border-color:var(--text-secondary);color:var(--text-secondary);}
+.adv-badge{display:none;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;
+  background:rgba(240,165,0,.15);color:var(--amber);border:1px solid rgba(240,165,0,.3);
+  white-space:nowrap;}
+.adv-badge.visible{display:inline-block;}
+
+/* ── Tabla de resultados avanzada ─────────────────────────────── */
+#adv-results-section{display:none;border-top:1px solid var(--border);}
+#adv-results-section.visible{display:block;}
+.adv-results-header{display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px 8px;background:var(--bg-surface);}
+.adv-results-title{font-family:var(--font-display);font-size:12px;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);}
+.adv-results-count{font-family:var(--font-mono);font-size:11px;color:var(--text-muted);}
+.adv-table-wrap{overflow-x:auto;max-height:340px;overflow-y:auto;}
+.adv-table{width:100%;border-collapse:collapse;font-size:11px;}
+.adv-table thead th{position:sticky;top:0;background:var(--bg-elevated);
+  padding:7px 10px;text-align:left;font-family:var(--font-display);font-size:10px;
+  font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-muted);
+  border-bottom:1px solid var(--border);white-space:nowrap;}
+.adv-table tbody tr{border-bottom:1px solid var(--border);transition:background .12s;}
+.adv-table tbody tr:hover{background:var(--bg-elevated);}
+.adv-table tbody td{padding:6px 10px;color:var(--text-primary);vertical-align:middle;}
+.adv-table tbody td:first-child code{font-size:10px;color:var(--teal);}
+.adv-table .td-monto{font-family:var(--font-mono);font-size:11px;color:var(--amber);
+  text-align:right;white-space:nowrap;}
+.adv-table .td-rmc code{font-size:10px;color:var(--text-muted);}
+.adv-no-results{padding:20px;text-align:center;color:var(--text-muted);
+  font-size:12px;font-family:var(--font-display);}
+/* #record-count movido a .scrollable-section */
 #record-count strong{color:var(--amber);}
 
 /* MAIN */
@@ -172,7 +248,7 @@ tbody td.ta{color:var(--amber);font-weight:600;}
 #toast.error{border-color:rgba(240,82,82,.4);}
 
 /* OTHER VISTAS */
-#vista-cobros,#vista-help{align-items:center;justify-content:center;flex-direction:column;gap:16px;color:var(--text-muted);}
+#vista-help{align-items:center;justify-content:center;flex-direction:column;gap:16px;color:var(--text-muted);}
 .cs-icon{font-size:48px;}
 .cs-title{font-family:var(--font-display);font-size:24px;font-weight:700;color:var(--text-secondary);}
 
@@ -182,7 +258,8 @@ tbody td.ta{color:var(--amber);font-weight:600;}
 @media(max-width:1100px){#kpi-row{grid-template-columns:1fr 1fr;}#charts-grid{grid-template-columns:1fr;}.chart-card.wide{grid-column:auto;}}
 
 /* ══ MAPA ══════════════════════════════════════════════════════════ */
-#vista-mapa { flex-direction: row; align-items: stretch; }
+#vista-mapa { flex-direction: row; align-items: stretch; position: relative; overflow: hidden; }
+#vista-cobros { flex-direction: row; align-items: stretch; }
 
 #map-sidebar {
   width: var(--sidebar-w); min-width: var(--sidebar-w);
@@ -190,6 +267,14 @@ tbody td.ta{color:var(--amber);font-weight:600;}
   border-right: 1px solid var(--border);
   display: flex; flex-direction: column; overflow: hidden;
   z-index: 10;
+}
+/* Scrollable layer list inside sidebar */
+#map-sidebar /* min-height:0 manejado por .scrollable-section */
+/* Layer list items scroll */
+#layers-list {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 #map-container {
@@ -341,7 +426,7 @@ tbody td.ta{color:var(--amber);font-weight:600;}
 
 /* Leaflet overrides */
 .leaflet-container {
-  background: #0d1117 !important;
+  background: var(--bg-base) !important;
   font-family: var(--font-body) !important;
 }
 .leaflet-tile { filter: brightness(.8) saturate(.6) hue-rotate(180deg); }
@@ -537,10 +622,10 @@ tbody td.ta{color:var(--amber);font-weight:600;}
 
 
 /* ── Startup / Loading overlay ─────────────────────── */
-#loading-overlay{position:fixed;inset:0;background:#0d1117;display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity .4s}
+#loading-overlay{position:fixed;inset:0;background:var(--bg-base);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity .4s}
 #loading-overlay.hidden{opacity:0;pointer-events:none}
 #startup-box{background:var(--bg-panel);border:1px solid var(--border);border-radius:12px;padding:36px 40px;max-width:480px;width:90%;text-align:center;box-shadow:0 20px 60px #0006}
-.startup-logo{width:56px;height:56px;background:var(--amber);color:#0d1117;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;margin:0 auto 14px}
+.startup-logo{width:56px;height:56px;background:var(--amber);color:var(--bg-base);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;margin:0 auto 14px}
 .startup-title{font-size:18px;font-weight:600;color:var(--text);margin-bottom:4px}
 .startup-subtitle{font-size:12px;color:var(--text-muted);margin-bottom:28px}
 .startup-spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--amber);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
@@ -556,11 +641,190 @@ tbody td.ta{color:var(--amber);font-weight:600;}
 .picker-status{font-size:11px;color:var(--text-muted);flex:1;text-align:right}
 .picker-status.ok{color:#22c55e}
 .picker-status.err{color:#f05252}
-.launch-btn{margin-top:20px;width:100%;padding:12px;background:var(--amber);color:#0d1117;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s}
+.launch-btn{margin-top:20px;width:100%;padding:12px;background:var(--amber);color:var(--bg-base);border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s}
 .launch-btn:disabled{opacity:.35;cursor:not-allowed}
 .launch-btn:not(:disabled):hover{opacity:.85}
 .picker-hint{margin-top:14px;font-size:11px;color:var(--text-muted);line-height:1.5}
 .picker-hint code{background:var(--bg-card);padding:1px 5px;border-radius:3px;font-family:var(--font-mono);color:var(--teal)}
+
+
+/* ══════════════════════════════════════════════════════════════
+   SETTINGS DRAWER
+══════════════════════════════════════════════════════════════ */
+#settings-drawer.open { display:flex !important; flex-direction:column; }
+#settings-overlay.open { display:block !important; }
+
+.sett-section { padding:20px; border-bottom:1px solid var(--border); }
+.sett-title   { font-family:var(--font-display);font-size:13px;font-weight:700;
+                color:var(--amber);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px; }
+.sett-label   { font-size:11px;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em; }
+
+/* Palette grid */
+.palette-grid { display:grid;grid-template-columns:repeat(2,1fr);gap:8px; }
+.palette-card { border:2px solid var(--border);border-radius:var(--radius);padding:10px 12px;
+                cursor:pointer;transition:border-color .2s,transform .1s;position:relative; }
+.palette-card:hover  { border-color:var(--amber);transform:translateY(-1px); }
+.palette-card.active { border-color:var(--amber); }
+.palette-card.active::after { content:'✓';position:absolute;top:6px;right:8px;
+                              color:var(--amber);font-size:12px;font-weight:700; }
+.palette-swatches { display:flex;gap:3px;margin-bottom:6px; }
+.palette-swatch   { height:10px;flex:1;border-radius:2px; }
+.palette-name     { font-size:11px;color:var(--text-secondary);font-family:var(--font-body); }
+
+/* Accent swatches */
+.accent-dot { width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;
+              transition:transform .15s,border-color .15s; }
+.accent-dot:hover  { transform:scale(1.15); }
+.accent-dot.active { border-color:var(--text-primary);transform:scale(1.1); }
+
+/* Font grid */
+.font-grid { display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px; }
+.font-card { padding:8px 10px;border:2px solid var(--border);border-radius:var(--radius);
+             cursor:pointer;transition:border-color .2s; }
+.font-card:hover  { border-color:var(--amber); }
+.font-card.active { border-color:var(--amber); }
+.font-card-preview { font-size:16px;color:var(--text-primary);margin-bottom:2px; }
+.font-card-name   { font-size:10px;color:var(--text-muted); }
+
+/* DB reload rows */
+.db-reload-row  { display:flex;align-items:center;justify-content:space-between;
+                  padding:8px 0;border-bottom:1px solid var(--border); }
+.db-reload-row:last-child { border-bottom:none; }
+.db-reload-info { display:flex;flex-direction:column;gap:2px; }
+.db-reload-name { font-size:12px;color:var(--text-primary);font-family:var(--font-mono); }
+.db-reload-desc { font-size:10px;color:var(--text-muted); }
+.db-reload-btn  { padding:5px 10px;background:var(--bg-elevated);border:1px solid var(--border);
+                  border-radius:var(--radius);color:var(--text-secondary);cursor:pointer;
+                  font-size:11px;transition:all .2s;white-space:nowrap; }
+.db-reload-btn:hover { border-color:var(--amber);color:var(--amber); }
+.db-reload-btn.loaded { border-color:var(--green);color:var(--green); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   GEO LAYER FORM — EXTENDED STYLES
+══════════════════════════════════════════════════════════════ */
+.lf-section-title {
+  font-size:11px; font-weight:700; color:var(--amber);
+  text-transform:uppercase; letter-spacing:.05em;
+  margin:12px 0 6px; padding-top:10px;
+  border-top:1px solid var(--border);
+}
+.lf-color-input {
+  width:100%; height:32px; border-radius:6px;
+  border:1px solid var(--border); background:var(--bg-elevated);
+  cursor:pointer; padding:2px;
+}
+.lf-select {
+  width:100%; padding:6px 8px; border-radius:var(--radius);
+  border:1px solid var(--border); background:var(--bg-elevated);
+  color:var(--text-primary); font-size:12px; cursor:pointer;
+  font-family:var(--font-body);
+}
+.lf-select:focus { outline:none; border-color:var(--amber); }
+
+/* Popup de capas geo */
+.leaflet-popup-content-wrapper.geo-popup,
+.geo-popup .leaflet-popup-content-wrapper {
+  background: var(--bg-panel) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow) !important;
+  color: var(--text-primary) !important;
+  padding: 0 !important;
+}
+.geo-popup .leaflet-popup-tip {
+  background: var(--bg-panel) !important;
+}
+.geo-popup .leaflet-popup-content {
+  margin: 0 !important;
+  padding: 12px !important;
+}
+.geo-popup .leaflet-popup-close-button {
+  color: var(--text-muted) !important;
+  padding: 6px 8px !important;
+}
+
+
+/* ══════════════════════════════════════════════════════
+   COLOR CLASSIFICATION UI
+══════════════════════════════════════════════════════ */
+.pal-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  margin-bottom: 6px;
+}
+.pal-grid-h {
+  grid-template-columns: repeat(2, 1fr);
+}
+.pal-swatch {
+  padding: 5px 6px;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  background: var(--bg-elevated);
+}
+.pal-swatch:hover { border-color: var(--amber); }
+.pal-active { border-color: var(--amber) !important; background: var(--bg-panel); }
+.pal-swatch-h { padding: 5px; }
+.breaks-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px;
+  border-radius: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.breaks-row:last-child { border-bottom: none; }
+
+/* Map legend overlay */
+.map-legend {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 10px 12px;
+  min-width: 160px;
+  max-width: 200px;
+  box-shadow: var(--shadow);
+  font-family: var(--font-body);
+}
+
+
+/* ══════════════════════════════════════════════════════
+   TOGGLE SWITCH
+══════════════════════════════════════════════════════ */
+.toggle-switch {
+  position: relative;
+  display: inline-flex;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.toggle-switch input { display: none; }
+.toggle-track {
+  width: 40px;
+  height: 22px;
+  background: var(--border);
+  border-radius: 11px;
+  transition: background .2s;
+  position: relative;
+}
+.toggle-switch input:checked ~ .toggle-track { background: var(--amber); }
+.toggle-thumb {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  top: 3px;
+  left: 3px;
+  transition: left .2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.3);
+}
+.toggle-switch input:checked ~ .toggle-track .toggle-thumb { left: 21px; }
+
+/* Centroids editor inputs */
+.centroid-input:focus { border-color: var(--amber) !important; outline: none; }
 
 </style>
 <link rel="stylesheet" href="lib/leaflet.min.css"/>
@@ -639,6 +903,138 @@ tbody td.ta{color:var(--amber);font-weight:600;}
   <div class="topbar-right">
     <div id="db-status" class="loading"><div class="dot"></div><span id="db-status-txt">Cargando BD...</span></div>
     <div id="last-update"></div>
+    <button id="btn-settings" onclick="openSettings()" title="Personalizar" style="margin-left:auto;background:none;border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px;color:var(--text-secondary);cursor:pointer;font-size:16px;transition:all .2s;flex-shrink:0;" onmouseover="this.style.borderColor='var(--amber)';this.style.color='var(--amber)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-secondary)'">&#9881;&#65039;</button>
+  </div>
+</div>
+
+<!-- SETTINGS DRAWER -->
+<div id="settings-overlay" onclick="closeSettings()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;"></div>
+<div id="settings-drawer" style="display:none;position:fixed;top:0;right:0;width:400px;height:100vh;background:var(--bg-panel);border-left:1px solid var(--border);z-index:1001;overflow-y:auto;box-shadow:-8px 0 32px rgba(0,0,0,.5);flex-direction:column;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg-panel);z-index:2;">
+    <span style="font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--text-primary);">&#9881;&#65039; Personalización</span>
+    <button onclick="closeSettings()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;padding:2px 6px;border-radius:4px;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-muted)'">&#10005;</button>
+  </div>
+
+  <!-- SECCIÓN: TEMA DE COLOR -->
+  <div class="sett-section">
+    <div class="sett-title">&#127912; Paleta de colores</div>
+    <div id="palette-grid" class="palette-grid"></div>
+    <div style="margin-top:10px;">
+      <div class="sett-label">Color de acento principal</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;" id="accent-swatches"></div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN: TIPOGRAFÍA -->
+  <div class="sett-section">
+    <div class="sett-title">&#128293; Tipografía</div>
+    <div class="sett-label">Fuente principal</div>
+    <div id="font-grid" class="font-grid"></div>
+    <div class="sett-label" style="margin-top:12px;">Tamaño base</div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <input type="range" id="font-size-slider" min="12" max="17" step="1" value="14"
+             oninput="applyFontSize(this.value)"
+             style="flex:1;accent-color:var(--amber);">
+      <span id="font-size-label" style="font-size:12px;color:var(--text-secondary);min-width:28px;">14px</span>
+    </div>
+  </div>
+
+  <!-- SECCIÓN: MAPA DE MORA -->
+  <div class="sett-section">
+    <div class="sett-title">🗺 Mapa de Cartera de Mora</div>
+
+    <!-- On/Off toggle -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--text-primary)">Capa de deuda activa</div>
+        <div style="font-size:10px;color:var(--text-muted)">Muestra u oculta los puntos/coroplético de mora</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="toggle-sector-layer" checked onchange="toggleSectorLayer(this.checked)">
+        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+      </label>
+    </div>
+
+    <!-- Modo puntos / coroplético -->
+    <div class="sett-label">Modo de visualización</div>
+    <div style="display:flex;gap:6px;margin-bottom:12px;">
+      <button class="btn-modo active" id="modo-puntos" onclick="setModo('puntos')">&#9679; Puntos</button>
+      <button class="btn-modo" id="modo-coro" onclick="setModo('coropletico')">&#9632; Coroplético</button>
+    </div>
+
+    <!-- Colorear por -->
+    <div class="filter-item" style="margin-bottom:8px;">
+      <label>Colorear por</label>
+      <select id="map-campo" onchange="refreshMapData()" class="lf-select" style="width:100%">
+        <option value="total">Deuda total (L.)</option>
+        <option value="predios">Número de predios</option>
+        <option value="contribuyentes">Contribuyentes</option>
+      </select>
+    </div>
+
+    <!-- Filtrar tributo -->
+    <div class="filter-item" style="margin-bottom:14px;">
+      <label>Filtrar tributo</label>
+      <select id="map-tributo" onchange="refreshMapData()" class="lf-select" style="width:100%">
+        <option value="">Todos</option>
+      </select>
+    </div>
+
+    <!-- Centroides editables -->
+    <div class="sett-label" style="display:flex;align-items:center;justify-content:space-between;">
+      <span>📍 Ubicación de sectores</span>
+      <button onclick="resetCentroids()" style="font-size:10px;padding:2px 8px;background:none;border:1px solid var(--border);border-radius:4px;color:var(--text-muted);cursor:pointer;">Restablecer</button>
+    </div>
+    <div style="font-size:10px;color:var(--text-muted);margin-bottom:8px;line-height:1.5">
+      Edita las coordenadas de los centros de cada sector. Los cambios se guardan automáticamente.
+    </div>
+    <div id="centroids-editor" style="display:flex;flex-direction:column;gap:4px;max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:6px;background:var(--bg-base)">
+    </div>
+    <div style="font-size:10px;color:var(--text-muted);margin-top:6px;line-height:1.5;">
+      📍 Usa el botón <strong style="color:var(--amber)">📍</strong> de cada sector para seleccionar su ubicación directamente haciendo clic en el mapa.<br>
+      🎯 El botón <strong style="color:var(--text-secondary)">🎯</strong> mueve el mapa a la ubicación actual del sector.
+    </div>
+  </div>
+
+  <!-- SECCIÓN: ACTUALIZAR BASES DE DATOS -->
+  <div class="sett-section">
+    <div class="sett-title">&#128196; Actualizar bases de datos</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;line-height:1.5;">Cargue archivos .db actualizados sin reiniciar el servidor. Útil en IIS, Apache, GitHub Pages.</div>
+    <div class="db-reload-row">
+      <div class="db-reload-info">
+        <span class="db-reload-name">carteras.db</span>
+        <span class="db-reload-desc">Datos de mora</span>
+      </div>
+      <label class="db-reload-btn" id="lbl-reload-carteras">
+        &#8635; Actualizar
+        <input type="file" accept=".db,.sqlite" id="reload-carteras" style="display:none" onchange="reloadDB('carteras',this)">
+      </label>
+    </div>
+    <div class="db-reload-row">
+      <div class="db-reload-info">
+        <span class="db-reload-name">gestion_cobros.db</span>
+        <span class="db-reload-desc">Gestiones y acuerdos</span>
+      </div>
+      <label class="db-reload-btn" id="lbl-reload-cobros">
+        &#8635; Actualizar
+        <input type="file" accept=".db,.sqlite" id="reload-cobros" style="display:none" onchange="reloadDB('cobros',this)">
+      </label>
+    </div>
+    <div class="db-reload-row">
+      <div class="db-reload-info">
+        <span class="db-reload-name">geodatos.db</span>
+        <span class="db-reload-desc">Capas geográficas</span>
+      </div>
+      <label class="db-reload-btn" id="lbl-reload-geo">
+        &#8635; Actualizar
+        <input type="file" accept=".db,.sqlite" id="reload-geo" style="display:none" onchange="reloadDB('geo',this)">
+      </label>
+    </div>
+  </div>
+
+  <div style="padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:8px;">
+    <button onclick="resetSettings()" style="flex:1;padding:8px;background:none;border:1px solid var(--border);border-radius:var(--radius);color:var(--text-muted);cursor:pointer;font-size:12px;">Restablecer</button>
+    <button onclick="closeSettings()" style="flex:2;padding:8px;background:var(--amber);border:none;border-radius:var(--radius);color:var(--bg-base);cursor:pointer;font-size:12px;font-weight:700;">Listo</button>
   </div>
 </div>
 <div id="app">
@@ -652,8 +1048,11 @@ tbody td.ta{color:var(--amber);font-weight:600;}
           <div class="kpi-mini kpi-blue"><span class="kpi-mini-label">Intereses</span><span class="kpi-mini-val kv-blue" id="sk-intereses">&#8212;</span></div>
         </div>
       </div>
-      <div class="sidebar-section" style="flex:1;overflow-y:auto;">
-        <div class="sidebar-label">Filtros</div>
+      <div class="sidebar-section scrollable-section" style="flex:1;">
+        <div class="sidebar-label" style="display:flex;align-items:center;justify-content:space-between;">
+          Filtros
+          <span id="adv-active-badge" class="adv-badge">Búsqueda activa</span>
+        </div>
         <div class="filter-group">
           <div class="filter-item"><label>Tributo</label><select id="f-tributo" onchange="applyFilters()"><option value="">Todos los tributos</option></select></div>
           <div class="filter-item"><label>Sector</label><select id="f-sector" onchange="applyFilters()"><option value="">Todos los sectores</option></select></div>
@@ -662,6 +1061,34 @@ tbody td.ta{color:var(--amber);font-weight:600;}
           <div class="filter-item"><label>A&#241;o de inicio de mora</label><div class="year-range"><select id="f-anio-ini" onchange="applyFilters()"><option value="">Desde</option></select><span>&#8212;</span><select id="f-anio-fin" onchange="applyFilters()"><option value="">Hasta</option></select></div></div>
           <div class="filter-item"><label>Zona de Cobranza</label><select id="f-zona" onchange="applyFilters()"><option value="">Todas las zonas</option></select></div>
           <button class="btn-reset" onclick="resetFilters()">&#8634; Limpiar filtros</button>
+
+          <!-- ── Búsqueda avanzada por campo ──────────────────── -->
+          <button class="adv-search-toggle" id="adv-toggle" onclick="toggleAdvSearch()">
+            <span>&#128269; Búsqueda avanzada</span>
+            <em class="adv-arrow">&#9660;</em>
+          </button>
+          <div class="adv-search-panel" id="adv-panel">
+            <div class="filter-item">
+              <label>Buscar por campo</label>
+              <select id="adv-campo" class="adv-search-input"
+                style="background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238b949e' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;appearance:none;">
+                <option value="clave_catastral">Clave Catastral</option>
+                <option value="rmc">RMC</option>
+                <option value="nombre_contribuyente">Nombre de Contribuyente</option>
+              </select>
+            </div>
+            <div class="filter-item">
+              <label>Valor a buscar</label>
+              <input type="text" id="adv-valor" class="adv-search-input"
+                placeholder="Escriba el valor..."
+                onkeydown="if(event.key==='Enter') runAdvSearch()">
+            </div>
+            <div class="adv-btn-row">
+              <button class="btn-adv-search" onclick="runAdvSearch()">&#128269; Buscar</button>
+              <button class="btn-adv-clear" onclick="clearAdvSearch()">&#8634; Limpiar</button>
+            </div>
+          </div>
+          <!-- ──────────────────────────────────────────────────── -->
         </div>
       </div>
       <div id="record-count"><span>Registros: <strong id="rec-count">&#8212;</strong></span><span id="rec-pct" style="font-size:10px;"></span></div>
@@ -685,6 +1112,39 @@ tbody td.ta{color:var(--amber);font-weight:600;}
         <button class="btn-export btn-export-csv" onclick="exportCSV()">&#8595; CSV</button>
         <button class="btn-export btn-export-excel" onclick="exportExcel()">&#8595; Excel (.xlsx)</button>
       </div>
+
+      <!-- ── Tabla de resultados de búsqueda avanzada ──────── -->
+      <div id="adv-results-section">
+        <div class="adv-results-header">
+          <span class="adv-results-title">&#128269; Resultados de búsqueda</span>
+          <span class="adv-results-count" id="adv-results-count"></span>
+        </div>
+        <div class="adv-table-wrap">
+          <table class="adv-table">
+            <thead>
+              <tr>
+                <th>Clave Catastral</th>
+                <th>RMC</th>
+                <th>Contribuyente</th>
+                <th>Tributo</th>
+                <th>Sector</th>
+                <th>Barrio/Col.</th>
+                <th>Tipo Predio</th>
+                <th>A. Inicio</th>
+                <th style="text-align:right;">Capital L.</th>
+                <th style="text-align:right;">Intereses L.</th>
+                <th style="text-align:right;">Total L.</th>
+                <th>Categoría</th>
+              </tr>
+            </thead>
+            <tbody id="adv-table-body">
+              <tr><td colspan="12" class="adv-no-results">Realice una búsqueda avanzada para ver resultados</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- ──────────────────────────────────────────────────── -->
+
       <div id="table-section">
         <div class="table-header"><div class="table-title">Detalle de Registros</div><input type="text" class="table-search" id="table-search" placeholder="Buscar nombre, RMC, catastral..." oninput="filterTable()"></div>
         <div class="table-wrap"><table id="data-table">
@@ -713,41 +1173,12 @@ tbody td.ta{color:var(--amber);font-weight:600;}
 
     <!-- LEFT PANEL — KPIs zona seleccionada -->
     <div id="map-sidebar">
-      <div class="sidebar-section">
-        <div class="sidebar-label">Zona seleccionada</div>
-        <div id="map-zona-title" style="font-family:var(--font-display);font-size:15px;font-weight:700;color:var(--amber);margin-bottom:10px;">Haga clic en una zona</div>
-        <div class="kpi-stack">
-          <div class="kpi-mini"><span class="kpi-mini-label">Deuda Total</span><span class="kpi-mini-val kv-amber" id="mz-total">—</span></div>
-          <div class="kpi-mini kpi-accent"><span class="kpi-mini-label">Predios</span><span class="kpi-mini-val kv-teal" id="mz-predios">—</span></div>
-          <div class="kpi-mini kpi-blue"><span class="kpi-mini-label">Contribuyentes</span><span class="kpi-mini-val kv-blue" id="mz-contribs">—</span></div>
-        </div>
-      </div>
 
-      <!-- Modo de visualización -->
-      <div class="sidebar-section">
-        <div class="sidebar-label">Modo de visualización</div>
-        <div style="display:flex;gap:6px;margin-bottom:12px;">
-          <button class="btn-modo active" id="modo-puntos" onclick="setModo('puntos')">&#9679; Puntos</button>
-          <button class="btn-modo" id="modo-coro" onclick="setModo('coropletico')">&#9632; Coroplético</button>
-        </div>
-        <div class="filter-item">
-          <label>Colorear por</label>
-          <select id="map-campo" onchange="refreshMapData()">
-            <option value="total">Deuda total (L.)</option>
-            <option value="predios">Número de predios</option>
-            <option value="contribuyentes">Contribuyentes</option>
-          </select>
-        </div>
-        <div class="filter-item" style="margin-top:8px;">
-          <label>Filtrar tributo</label>
-          <select id="map-tributo" onchange="refreshMapData()">
-            <option value="">Todos</option>
-          </select>
-        </div>
-      </div>
+
+
 
       <!-- Capas SHP cargadas -->
-      <div class="sidebar-section" style="flex:1;overflow-y:auto;">
+      <div class="sidebar-section scrollable-section" style="flex:1;">
         <div class="sidebar-label" style="display:flex;align-items:center;justify-content:space-between;">
           Capas geográficas
           <button class="btn-icon" onclick="openGeoPanel()" title="Cargar nueva capa SHP">&#43;</button>
@@ -759,7 +1190,7 @@ tbody td.ta{color:var(--amber);font-weight:600;}
         </div>
       </div>
 
-      <div style="padding:12px 16px;border-top:1px solid var(--border);">
+      <div style="padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;">
         <button class="btn-reset" onclick="openGeoPanel()">&#9881; Configurar capas SHP</button>
       </div>
     </div>
@@ -774,9 +1205,63 @@ tbody td.ta{color:var(--amber);font-weight:600;}
         <div id="legend-items"></div>
       </div>
 
+      <!-- Color classification legend overlay (bottom-right) -->
+      <div id="map-legend-container" style="
+        display:none; position:absolute; bottom:60px; right:10px; z-index:900;
+        flex-direction:column; gap:6px; max-height:50vh; overflow-y:auto;">
+      </div>
+
       <!-- Loading indicator -->
       <div id="map-loading" style="display:none;">
         <div class="map-loading-inner">Cargando datos...</div>
+      </div>
+
+      <!-- ── Banner de selección de centroide (pick mode) ── -->
+      <div id="centroid-pick-banner" style="
+        display:none; position:absolute; top:12px; left:50%; transform:translateX(-50%);
+        z-index:1100; background:var(--amber); color:var(--bg-base);
+        font-family:var(--font-display); font-size:12px; font-weight:700;
+        letter-spacing:.5px; padding:8px 18px; border-radius:20px;
+        box-shadow:0 4px 16px rgba(0,0,0,.4); white-space:nowrap;
+        align-items:center; gap:10px;">
+        <span>📍</span>
+        <span id="centroid-pick-label">Haga clic en el mapa para ubicar el sector</span>
+        <button onclick="cancelCentroidPick()"
+          style="margin-left:6px;background:rgba(0,0,0,.2);border:none;border-radius:10px;
+                 color:inherit;cursor:pointer;padding:2px 8px;font-size:11px;font-weight:700;">
+          ✕ Cancelar
+        </button>
+      </div>
+
+      <!-- ── Zona seleccionada popup (bottom-left) ── -->
+      <div id="zona-kpi-popup" style="
+        display:none; position:absolute; bottom:20px; left:14px; z-index:500;
+        background:var(--bg-panel); border:1px solid var(--border);
+        border-radius:var(--radius); padding:10px 14px;
+        box-shadow:var(--shadow); min-width:160px; max-width:200px;
+        pointer-events:none;">
+        <div style="font-family:var(--font-display);font-size:9px;font-weight:700;
+                    letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);
+                    margin-bottom:6px;">Zona seleccionada</div>
+        <div id="map-zona-title" style="font-family:var(--font-display);font-size:13px;
+             font-weight:700;color:var(--amber);margin-bottom:8px;
+             white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+          Haga clic en una zona
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;">
+            <span style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);">Deuda</span>
+            <span id="mz-total" style="font-family:var(--font-display);font-size:12px;font-weight:700;color:var(--amber);">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;">
+            <span style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);">Predios</span>
+            <span id="mz-predios" style="font-family:var(--font-display);font-size:12px;font-weight:700;color:var(--teal);">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;">
+            <span style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);">Contribuyentes</span>
+            <span id="mz-contribs" style="font-family:var(--font-display);font-size:12px;font-weight:700;color:var(--blue);">—</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -784,7 +1269,23 @@ tbody td.ta{color:var(--amber);font-weight:600;}
     <div id="geo-panel" class="geo-panel-closed">
       <div class="geo-panel-header">
         <span style="font-family:var(--font-display);font-size:14px;font-weight:700;letter-spacing:.5px;">CONFIGURAR CAPAS GEOGRÁFICAS</span>
-        <button class="btn-icon" onclick="closeGeoPanel()">&#x2715;</button>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span id="geo-pending-badge"
+            style="display:none;font-size:10px;font-weight:700;font-family:var(--font-display);
+                   padding:2px 8px;border-radius:10px;white-space:nowrap;
+                   background:rgba(240,165,0,.15);color:var(--amber);
+                   border:1px solid rgba(240,165,0,.3);">
+          </span>
+          <button id="geo-commit-btn" onclick="geoCommitDB()"
+            style="padding:5px 10px;border-radius:var(--radius);border:1px solid rgba(34,197,94,.35);
+                   background:rgba(34,197,94,.07);color:var(--green);font-family:var(--font-display);
+                   font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+                   cursor:pointer;transition:all .18s;opacity:0.4;pointer-events:none;"
+            title="Guardar capas en geodatos.db">
+            &#x1F4BE; Guardar
+          </button>
+          <button class="btn-icon" onclick="closeGeoPanel()">&#x2715;</button>
+        </div>
       </div>
       <div class="geo-panel-body">
 
@@ -801,15 +1302,191 @@ tbody td.ta{color:var(--amber);font-weight:600;}
           <input type="file" id="shp-input" accept=".zip" style="display:none" onchange="handleFileInput(event)">
         </div>
 
-        <!-- Layer config form -->
+        <!-- Layer config form — EXTENDED -->
         <div id="layer-form" style="display:none;">
-          <div style="font-family:var(--font-display);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;">Configurar nueva capa</div>
-          <div class="filter-item"><label>Nombre de la capa</label><input type="text" id="lf-nombre" class="table-search" style="width:100%;margin-left:0;" placeholder="Ej: Colonias SPS"></div>
-          <div class="filter-item" style="margin-top:8px;"><label>Descripción</label><input type="text" id="lf-desc" class="table-search" style="width:100%;margin-left:0;" placeholder="Descripción opcional"></div>
-          <div style="display:flex;gap:10px;margin-top:8px;">
-            <div class="filter-item" style="flex:1;"><label>Color</label><input type="color" id="lf-color" value="#f0a500" style="width:100%;height:35px;border-radius:6px;border:1px solid var(--border);background:var(--bg-elevated);cursor:pointer;"></div>
-            <div class="filter-item" style="flex:1;"><label>Opacidad</label><input type="range" id="lf-opacidad" min="0.1" max="1" step="0.1" value="0.6" style="width:100%;margin-top:10px;"></div>
+          <div style="font-family:var(--font-display);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;">Configurar capa</div>
+
+          <!-- Nombre y descripción -->
+          <div class="filter-item"><label>Nombre de la capa</label>
+            <input type="text" id="lf-nombre" class="table-search" style="width:100%;margin-left:0;" placeholder="Ej: Colonias SPS">
           </div>
+          <div class="filter-item" style="margin-top:6px;"><label>Descripción</label>
+            <input type="text" id="lf-desc" class="table-search" style="width:100%;margin-left:0;" placeholder="Descripción opcional">
+          </div>
+
+          <!-- Separador: Color / Clasificación -->
+          <div class="lf-section-title">🎨 Color / Clasificación</div>
+
+          <!-- Modo de color -->
+          <div class="filter-item" style="margin-bottom:8px;">
+            <label>Modo de color</label>
+            <select id="lf-color-mode" class="lf-select" style="width:100%;" onchange="onColorModeChange()">
+              <option value="solid">Color sólido</option>
+              <option value="categorical">Por campo · Categórico</option>
+              <option value="quantile">Por campo · Cuantil (rangos iguales por N)</option>
+              <option value="equal">Por campo · Intervalo igual</option>
+            </select>
+          </div>
+
+          <!-- Color sólido (por defecto) -->
+          <div id="lf-solid-wrap">
+            <div style="display:flex;gap:8px;align-items:flex-end;">
+              <div class="filter-item" style="flex:1;"><label>Color relleno</label>
+                <input type="color" id="lf-color" value="#f0a500" class="lf-color-input">
+              </div>
+              <div class="filter-item" style="flex:2;"><label>Opacidad <span id="lf-opacidad-val">0.6</span></label>
+                <input type="range" id="lf-opacidad" min="0.1" max="1" step="0.05" value="0.6"
+                  oninput="document.getElementById('lf-opacidad-val').textContent=parseFloat(this.value).toFixed(2)"
+                  style="width:100%;accent-color:var(--amber);">
+              </div>
+            </div>
+          </div>
+
+          <!-- Por campo (oculto hasta seleccionar) -->
+          <div id="lf-classify-wrap" style="display:none;">
+            <div class="filter-item" style="margin-bottom:6px;">
+              <label>Campo de clasificación</label>
+              <select id="lf-color-campo" class="lf-select" style="width:100%;" onchange="onColorFieldChange()">
+                <option value="">— Seleccione campo —</option>
+              </select>
+            </div>
+            <div id="lf-classify-type" style="font-size:10px;color:var(--teal);margin-bottom:8px;padding:4px 6px;background:var(--bg-elevated);border-radius:4px;border:1px solid var(--border)"></div>
+
+            <!-- Paleta categórica -->
+            <div id="lf-cat-wrap" style="display:none;">
+              <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:6px;">Paleta de colores</label>
+              <input type="hidden" id="lf-color-palette">
+              <div id="lf-cat-palettes" class="pal-grid"></div>
+              <div id="lf-cat-preview" style="margin-top:8px;max-height:150px;overflow-y:auto;border:1px solid var(--border);border-radius:4px;padding:6px;background:var(--bg-elevated)"></div>
+            </div>
+
+            <!-- Rangos numéricos -->
+            <div id="lf-num-wrap" style="display:none;">
+              <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:6px;">Paleta secuencial</label>
+              <input type="hidden" id="lf-color-palette">
+              <div id="lf-num-palettes" class="pal-grid pal-grid-h"></div>
+              <div style="display:flex;gap:8px;margin-top:8px;">
+                <div class="filter-item" style="flex:1;"><label>Método</label>
+                  <select id="lf-num-method" class="lf-select" onchange="renderBreaksTable()">
+                    <option value="quantile">Cuantil</option>
+                    <option value="equal">Intervalo igual</option>
+                  </select>
+                </div>
+                <div class="filter-item" style="flex:1;"><label>N° rangos</label>
+                  <input type="number" id="lf-num-k" value="5" min="2" max="12" step="1"
+                    class="table-search" style="width:100%;margin:0;font-size:12px"
+                    oninput="renderBreaksTable()">
+                </div>
+              </div>
+              <div style="margin-top:8px;font-size:11px;color:var(--text-muted);margin-bottom:4px">Rangos editables</div>
+              <div id="lf-breaks-table" style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:4px;padding:4px;background:var(--bg-elevated)"></div>
+            </div>
+
+            <!-- Opacidad también en modo por campo -->
+            <div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px;">
+              <div class="filter-item" style="flex:1;"><label>Opacidad <span id="lf-opacidad-val">0.6</span></label>
+                <input type="range" id="lf-opacidad" min="0.1" max="1" step="0.05" value="0.6"
+                  oninput="document.getElementById('lf-opacidad-val').textContent=parseFloat(this.value).toFixed(2);document.getElementById('lf-opacidad').value=this.value"
+                  style="width:100%;accent-color:var(--amber);">
+              </div>
+              <div class="filter-item" style="flex:1;"><label>Color base (sin dato)</label>
+                <input type="color" id="lf-color" value="#f0a500" class="lf-color-input">
+              </div>
+            </div>
+          </div>
+
+          <!-- Separador: Estilo de contorno/línea -->
+          <div class="lf-section-title">📐 Borde / Línea</div>
+          <div style="display:flex;gap:8px;align-items:flex-end;">
+            <div class="filter-item" style="flex:1;"><label>Color borde</label>
+              <input type="color" id="lf-stroke-color" value="#ffffff" class="lf-color-input">
+            </div>
+            <div class="filter-item" style="flex:1;"><label>Grosor</label>
+              <select id="lf-stroke-width" class="lf-select">
+                <option value="0.5">0.5px</option>
+                <option value="1" selected>1px</option>
+                <option value="1.5">1.5px</option>
+                <option value="2">2px</option>
+                <option value="3">3px</option>
+                <option value="4">4px</option>
+              </select>
+            </div>
+            <div class="filter-item" style="flex:1;"><label>Estilo</label>
+              <select id="lf-stroke-style" class="lf-select">
+                <option value="solid">Sólida</option>
+                <option value="dashed">Discontinua</option>
+                <option value="dotted">Punteada</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Separador: Símbolo (solo para puntos) -->
+          <div class="lf-section-title">📍 Símbolo de punto</div>
+          <div style="display:flex;gap:8px;align-items:flex-end;">
+            <div class="filter-item" style="flex:2;"><label>Tipo de símbolo</label>
+              <select id="lf-point-symbol" class="lf-select">
+                <option value="circle">⬤ Círculo</option>
+                <option value="square">■ Cuadrado</option>
+                <option value="triangle">▲ Triángulo</option>
+                <option value="diamond">◆ Diamante</option>
+                <option value="star">★ Estrella</option>
+                <option value="cross">✚ Cruz</option>
+              </select>
+            </div>
+            <div class="filter-item" style="flex:1;"><label>Tamaño (px)</label>
+              <input type="number" id="lf-point-size" value="7" min="3" max="24" step="1"
+                class="table-search" style="width:100%;margin-left:0;">
+            </div>
+          </div>
+
+          <!-- Separador: Unión con datos externos -->
+          <div class="lf-section-title">🔗 Unión con datos externos <span style="font-size:9px;color:var(--text-muted);font-weight:400">(opcional)</span></div>
+          <div style="font-size:10px;color:var(--text-muted);margin-bottom:10px;line-height:1.5;">
+            Una el shapefile a cualquier base de datos. La capa se coloreará según la métrica elegida.
+          </div>
+
+          <!-- Paso 1: Base de datos -->
+          <div class="filter-item" style="margin-bottom:8px;">
+            <label>Base de datos</label>
+            <select id="lf-join-db" class="lf-select" style="width:100%;" onchange="onJoinDbChange()">
+              <option value="">— Sin unión —</option>
+              <option value="carteras">🗂 Cartera de Mora</option>
+              <option value="cobros">📋 Gestión de Cobros</option>
+            </select>
+          </div>
+
+          <!-- Paso 2: Tabla (oculto hasta elegir DB) -->
+          <div id="lf-join-tabla-wrap" style="display:none;margin-bottom:8px;">
+            <div class="filter-item">
+              <label>Tabla</label>
+              <select id="lf-join-tabla" class="lf-select" style="width:100%;" onchange="onJoinTablaChange()">
+              </select>
+            </div>
+          </div>
+
+          <!-- Paso 3+4: Llaves de unión (oculto hasta elegir tabla) -->
+          <div id="lf-join-keys-wrap" style="display:none;">
+            <div style="display:flex;gap:8px;margin-bottom:8px;">
+              <div class="filter-item" style="flex:1;">
+                <label>Campo shapefile (llave)</label>
+                <select id="lf-join-campo" class="lf-select">
+                  <option value="">— Seleccione —</option>
+                </select>
+              </div>
+              <div class="filter-item" style="flex:1;">
+                <label>Campo en la tabla (llave)</label>
+                <select id="lf-join-tipo" class="lf-select">
+                </select>
+              </div>
+            </div>
+            <div class="filter-item">
+              <label>Métrica a visualizar</label>
+              <select id="lf-join-metrica" class="lf-select" style="width:100%;">
+              </select>
+            </div>
+            <div id="lf-join-preview" style="margin-top:6px;font-size:10px;color:var(--text-muted);"></div>
+          </div>
+
           <div id="layer-preview" style="margin-top:10px;font-size:11px;color:var(--text-muted);"></div>
           <div style="display:flex;gap:8px;margin-top:12px;">
             <button class="btn-export btn-export-excel" style="flex:1;" onclick="saveLayer()">&#10003; Guardar capa</button>
@@ -893,9 +1570,26 @@ tbody td.ta{color:var(--amber);font-weight:600;}
       </div>
     </div>
 
-    <!-- Nueva gestión -->
-    <div style="padding:12px 16px;border-top:1px solid var(--border);">
+    <!-- Nueva gestión + Commit -->
+    <div style="padding:10px 16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px;">
       <button class="cob-btn-new" onclick="openGestionForm()">+ Nueva Gestión</button>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <button id="cob-commit-btn" onclick="cobCommitDB()"
+          style="flex:1;padding:7px 10px;border-radius:var(--radius);border:1px solid rgba(34,197,94,.35);
+                 background:rgba(34,197,94,.07);color:var(--green);font-family:var(--font-display);
+                 font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+                 cursor:pointer;transition:all .18s;opacity:0.4;pointer-events:none;"
+          onmouseover="this.style.background='rgba(34,197,94,.15)'"
+          onmouseout="this.style.background='rgba(34,197,94,.07)'">
+          &#x1F4BE; Guardar BD
+        </button>
+        <span id="cob-pending-badge"
+          style="display:none;font-size:10px;font-weight:700;font-family:var(--font-display);
+                 padding:3px 8px;border-radius:10px;white-space:nowrap;
+                 background:rgba(240,165,0,.15);color:var(--amber);
+                 border:1px solid rgba(240,165,0,.3);">
+        </span>
+      </div>
     </div>
   </div>
 
@@ -1154,6 +1848,10 @@ tbody td.ta{color:var(--amber);font-weight:600;}
 <div id="toast"></div>
 <script>
 let DB=null,ALL_DATA=[],FULL_TOTAL=0,CHARTS={},TABLE_SORTED=[],PAGE=0;
+let DB_COB=null, DB_GEO=null;  // declaradas aquí para evitar temporal dead zone
+let COB_PENDING = 0;   // Cambios en gestion_cobros.db sin exportar
+let ADV_ACTIVE  = false; // Búsqueda avanzada activa
+let GEO_PENDING = 0;   // Cambios en geodatos.db sin exportar
 const PAGE_SIZE=50,SORT_COL=9;let SORT_ASC=false,SORT_IDX=9;
 const FMT=new Intl.NumberFormat('es-HN',{minimumFractionDigits:0,maximumFractionDigits:0});
 const FMT2=new Intl.NumberFormat('es-HN',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -1324,6 +2022,120 @@ function populateFilters(){
   const yR=DB.exec("SELECT MIN(CAST(anio_inicio_mora AS INT)),MAX(CAST(anio_inicio_mora AS INT)) FROM cartera_mora WHERE anio_inicio_mora IS NOT NULL AND anio_inicio_mora>1900");
   if(yR.length){let[yMin,yMax]=yR[0].values[0];const ini=document.getElementById('f-anio-ini');const fin=document.getElementById('f-anio-fin');for(let y=yMin;y<=yMax;y++){ini.add(new Option(y,y));fin.add(new Option(y,y));}fin.value=yMax;}
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   BÚSQUEDA AVANZADA — filtro por campo específico
+══════════════════════════════════════════════════════════════════ */
+
+function toggleAdvSearch() {
+  const toggle = document.getElementById('adv-toggle');
+  const panel  = document.getElementById('adv-panel');
+  toggle.classList.toggle('open');
+  panel.classList.toggle('open');
+}
+
+function runAdvSearch() {
+  const campo = document.getElementById('adv-campo').value;
+  const valor = document.getElementById('adv-valor').value.trim();
+  if (!valor) { toast('Ingrese un valor para buscar', 'error'); return; }
+  if (!DB)    { toast('Base de datos no cargada', 'error'); return; }
+
+  ADV_ACTIVE = true;
+  document.getElementById('adv-active-badge').classList.add('visible');
+
+  // Construir WHERE combinando filtros normales + búsqueda avanzada
+  applyFilters();        // actualiza KPIs y gráficos con el WHERE combinado
+  renderAdvResults();    // llena la tabla de resultados
+}
+
+function clearAdvSearch() {
+  ADV_ACTIVE = false;
+  document.getElementById('adv-valor').value = '';
+  document.getElementById('adv-active-badge').classList.remove('visible');
+  // Ocultar tabla de resultados
+  const sec = document.getElementById('adv-results-section');
+  sec.classList.remove('visible');
+  // Re-aplicar solo con filtros normales
+  applyFilters();
+}
+
+function getAdvWherePart() {
+  if (!ADV_ACTIVE) return '';
+  const campo = document.getElementById('adv-campo').value;
+  const valor = document.getElementById('adv-valor').value.trim();
+  if (!valor) return '';
+  // LIKE para nombre, LIKE para catastral/rmc (búsqueda parcial)
+  const esc = valor.replace(/'/g, "''");
+  return ` AND UPPER(${campo}) LIKE UPPER('%${esc}%')`;
+}
+
+function renderAdvResults() {
+  if (!DB || !ADV_ACTIVE) return;
+
+  const campo = document.getElementById('adv-campo').value;
+  const valor = document.getElementById('adv-valor').value.trim();
+  if (!valor) return;
+
+  const baseWhere = buildWhere();   // WHERE de filtros normales
+  const advPart   = getAdvWherePart();
+  const fullWhere = baseWhere + advPart;
+
+  const rows = [];
+  try {
+    const res = DB.exec(`
+      SELECT clave_catastral, rmc, nombre_contribuyente, _tributo,
+             sector, barrio_colonia, tipo_predio, anio_inicio_mora,
+             CAST(REPLACE(COALESCE(saldo_capital,'0'),',','') AS REAL),
+             CAST(REPLACE(COALESCE(intereses,'0'),',','') AS REAL),
+             CAST(REPLACE(COALESCE(total_apagar,'0'),',','') AS REAL),
+             categoria_morosidad
+      FROM cartera_mora ${fullWhere}
+      ORDER BY CAST(REPLACE(COALESCE(total_apagar,'0'),',','') AS REAL) DESC
+      LIMIT 2000`);
+    if (res.length) res[0].values.forEach(r => rows.push(r));
+  } catch(e) {
+    toast('Error en búsqueda: ' + e.message, 'error');
+    return;
+  }
+
+  const PILL = { 'MOROSIDAD ALTA':'pill-alta','MOROSIDAD MEDIA':'pill-media','MOROSIDAD BAJA':'pill-baja' };
+  const sec   = document.getElementById('adv-results-section');
+  const tbody = document.getElementById('adv-table-body');
+  const count = document.getElementById('adv-results-count');
+
+  const campoLabel = {
+    clave_catastral:'Clave Catastral', rmc:'RMC',
+    nombre_contribuyente:'Nombre de Contribuyente'
+  }[campo];
+
+  count.textContent = `"${valor}" en ${campoLabel} · ${FMT.format(rows.length)} registro${rows.length !== 1 ? 's' : ''}${rows.length === 2000 ? ' (máx. 2,000)' : ''}`;
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="12" class="adv-no-results">No se encontraron registros para "${valor}"</td></tr>`;
+  } else {
+    tbody.innerHTML = rows.map(r => {
+      const cat   = r[11] || '';
+      const pill  = PILL[cat] ? `<span class="pill ${PILL[cat]}">${cat.replace('MOROSIDAD ','')}</span>` : (cat || '—');
+      return `<tr>
+        <td><code style="font-size:10px;color:var(--teal)">${r[0]||'—'}</code></td>
+        <td class="td-rmc"><code style="font-size:10px;color:var(--text-muted)">${r[1]||'—'}</code></td>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${(r[2]||'').replace(/"/g,'&quot;')}">${r[2]||'—'}</td>
+        <td>${r[3]||'—'}</td>
+        <td>${r[4]||'—'}</td>
+        <td style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r[5]||'—'}</td>
+        <td>${r[6]||'—'}</td>
+        <td style="text-align:center;">${r[7]||'—'}</td>
+        <td class="td-monto">${r[8]?FMT2.format(r[8]):'—'}</td>
+        <td class="td-monto">${r[9]?FMT2.format(r[9]):'—'}</td>
+        <td class="td-monto" style="color:var(--amber)">${r[10]?FMT2.format(r[10]):'—'}</td>
+        <td>${pill}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  sec.classList.add('visible');
+}
+
 function buildWhere(){
   const c=[];
   const t=document.getElementById('f-tributo').value;
@@ -1340,12 +2152,29 @@ function buildWhere(){
   if(ai) c.push("CAST(anio_inicio_mora AS INT)>="+parseInt(ai));
   if(af) c.push("CAST(anio_inicio_mora AS INT)<="+parseInt(af));
   if(z)  c.push("clasificacion_zona='"+z.split("'").join("''")+"'");
+  // Búsqueda avanzada se aplica en getAdvWherePart() — incluida en las consultas que la necesitan
   return "WHERE 1=1"+(c.length?" AND "+c.join(" AND "):"");
 }
 
-function getFilterDesc(){const p=[];const t=document.getElementById('f-tributo').value;const s=document.getElementById('f-sector').value;const cat=document.getElementById('f-categoria').value;if(t)p.push(t);if(s)p.push(s);if(cat)p.push(cat.replace('MOROSIDAD ',''));return p.length?' \u00b7 '+p.join(', '):''}
+function getFilterDesc(){
+  const p=[];
+  const t=document.getElementById('f-tributo').value;
+  const s=document.getElementById('f-sector').value;
+  const cat=document.getElementById('f-categoria').value;
+  if(t)p.push(t);if(s)p.push(s);
+  if(cat)p.push(cat.replace('MOROSIDAD ',''));
+  if(ADV_ACTIVE){
+    const campo=document.getElementById('adv-campo');
+    const valor=document.getElementById('adv-valor');
+    if(campo&&valor&&valor.value.trim()){
+      const labels={'clave_catastral':'Catastral','rmc':'RMC','nombre_contribuyente':'Nombre'};
+      p.push(labels[campo.value]+':'+valor.value.trim());
+    }
+  }
+  return p.length?' · '+p.join(', '):'';
+}
 async function applyFilters(){
-  if(!DB)return;const w=buildWhere();
+  if(!DB)return;const w=buildWhere()+getAdvWherePart();
   const sr=DB.exec(`SELECT COUNT(*) AS n,COUNT(DISTINCT clave_catastral) AS pr,COUNT(DISTINCT rmc) AS co,SUM(CAST(REPLACE(COALESCE(saldo_capital,'0'),',','') AS REAL)) AS cap,SUM(CAST(REPLACE(COALESCE(intereses,'0'),',','') AS REAL)) AS inte,SUM(CAST(REPLACE(COALESCE(total_apagar,'0'),',','') AS REAL)) AS tot FROM cartera_mora ${w}`);
   const[cnt,pr,co,cap,inte,tot]=sr[0].values[0];
   document.getElementById('k-total').textContent=fmtM(tot);
@@ -1403,11 +2232,12 @@ function renderTable(){
   document.getElementById('btn-next').disabled=end>=TABLE_SORTED.length;
 }
 function changePage(d){PAGE=Math.max(0,Math.min(PAGE+d,Math.ceil(TABLE_SORTED.length/PAGE_SIZE)-1));renderTable();document.getElementById('main-content').scrollTop=0;}
-function resetFilters(){['f-tributo','f-sector','f-categoria','f-predio','f-anio-ini','f-zona'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const fin=document.getElementById('f-anio-fin');if(fin&&fin.options.length>1)fin.value=fin.options[fin.options.length-1].value;document.getElementById('table-search').value='';applyFilters();toast('Filtros restablecidos','success');}
+function resetFilters(){['f-tributo','f-sector','f-categoria','f-predio','f-anio-ini','f-zona'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const fin=document.getElementById('f-anio-fin');if(fin&&fin.options.length>1)fin.value=fin.options[fin.options.length-1].value;document.getElementById('table-search').value='';// Limpiar búsqueda avanzada
+ADV_ACTIVE=false;const av=document.getElementById('adv-valor');if(av)av.value='';const b=document.getElementById('adv-active-badge');if(b)b.classList.remove('visible');const sec=document.getElementById('adv-results-section');if(sec)sec.classList.remove('visible');applyFilters();toast('Filtros restablecidos','success');}
 const HEADS=["Clave Catastral","RMC","Contribuyente","Tributo","Sector","Barrio/Colonia","Tipo Predio","A\u00f1o Inicio","A\u00f1o Final","A\u00f1os Mora","Capital L.","Intereses L.","Total L.","Categor\u00eda","Modalidad","Zona","Archivo"];
-function getExportData(){const w=buildWhere();return qArr(`SELECT clave_catastral,rmc,nombre_contribuyente,_tributo,sector,barrio_colonia,tipo_predio,anio_inicio_mora,anio_final_mora,cantidad_anios_mora,CAST(REPLACE(COALESCE(saldo_capital,'0'),',','') AS REAL),CAST(REPLACE(COALESCE(intereses,'0'),',','') AS REAL),CAST(REPLACE(COALESCE(total_apagar,'0'),',','') AS REAL),categoria_morosidad,modalidad_cobro,clasificacion_zona,_archivo FROM cartera_mora ${w} ORDER BY CAST(REPLACE(COALESCE(total_apagar,'0'),',','') AS REAL) DESC LIMIT 100000`);}
+function getExportData(){const w=buildWhere()+getAdvWherePart();return qArr(`SELECT clave_catastral,rmc,nombre_contribuyente,_tributo,sector,barrio_colonia,tipo_predio,anio_inicio_mora,anio_final_mora,cantidad_anios_mora,CAST(REPLACE(COALESCE(saldo_capital,'0'),',','') AS REAL),CAST(REPLACE(COALESCE(intereses,'0'),',','') AS REAL),CAST(REPLACE(COALESCE(total_apagar,'0'),',','') AS REAL),categoria_morosidad,modalidad_cobro,clasificacion_zona,_archivo FROM cartera_mora ${w} ORDER BY CAST(REPLACE(COALESCE(total_apagar,'0'),',','') AS REAL) DESC LIMIT 100000`);}
 function exportCSV(){toast('Generando CSV...','success');const rows=getExportData();const csv=[HEADS.join(','),...rows.map(r=>r.map(v=>{if(v==null)return'';const s=String(v).split('"').join('""');return/[,"\n]/.test(s)?`"${s}"`:s;}).join(','))].join('\n');dl(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}),`cartera_mora_${dtag()}.csv`);toast('CSV descargado','success');}
-function exportExcel(){toast('Generando Excel...','success');const rows=getExportData();const ws=XLSX.utils.aoa_to_sheet([HEADS,...rows]);ws['!cols']=[{wch:16},{wch:14},{wch:36},{wch:22},{wch:20},{wch:28},{wch:16},{wch:10},{wch:10},{wch:10},{wch:16},{wch:16},{wch:18},{wch:18},{wch:18},{wch:18},{wch:40}];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Cartera');const w=buildWhere();const sr=DB.exec(`SELECT COUNT(*),SUM(CAST(REPLACE(COALESCE(saldo_capital,'0'),',','') AS REAL)),SUM(CAST(REPLACE(COALESCE(intereses,'0'),',','') AS REAL)),SUM(CAST(REPLACE(COALESCE(total_apagar,'0'),',','') AS REAL)) FROM cartera_mora ${w}`);if(sr.length){const[c,cap,i,t]=sr[0].values[0];const ws2=XLSX.utils.aoa_to_sheet([['Resumen de Exportaci\u00f3n'],['Fecha',new Date().toLocaleString('es-HN')],['Filtros',getFilterDesc()||'Ninguno'],[],['Total registros',c],['Capital L.',cap],['Intereses L.',i],['Gran Total L.',t]]);XLSX.utils.book_append_sheet(wb,ws2,'Resumen');}XLSX.writeFile(wb,`cartera_mora_${dtag()}.xlsx`);toast('Excel descargado','success');}
+function exportExcel(){toast('Generando Excel...','success');const rows=getExportData();const ws=XLSX.utils.aoa_to_sheet([HEADS,...rows]);ws['!cols']=[{wch:16},{wch:14},{wch:36},{wch:22},{wch:20},{wch:28},{wch:16},{wch:10},{wch:10},{wch:10},{wch:16},{wch:16},{wch:18},{wch:18},{wch:18},{wch:18},{wch:40}];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Cartera');const w=buildWhere()+getAdvWherePart();const sr=DB.exec(`SELECT COUNT(*),SUM(CAST(REPLACE(COALESCE(saldo_capital,'0'),',','') AS REAL)),SUM(CAST(REPLACE(COALESCE(intereses,'0'),',','') AS REAL)),SUM(CAST(REPLACE(COALESCE(total_apagar,'0'),',','') AS REAL)) FROM cartera_mora ${w}`);if(sr.length){const[c,cap,i,t]=sr[0].values[0];const ws2=XLSX.utils.aoa_to_sheet([['Resumen de Exportaci\u00f3n'],['Fecha',new Date().toLocaleString('es-HN')],['Filtros',getFilterDesc()||'Ninguno'],[],['Total registros',c],['Capital L.',cap],['Intereses L.',i],['Gran Total L.',t]]);XLSX.utils.book_append_sheet(wb,ws2,'Resumen');}XLSX.writeFile(wb,`cartera_mora_${dtag()}.xlsx`);toast('Excel descargado','success');}
 function dtag(){const d=new Date();return d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2);}
 function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href);}
 let toastT;function toast(msg,type=''){const t=document.getElementById('toast');t.textContent=(type==='success'?'\u2713 ':'\u2716 ')+msg;t.className='show '+type;clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3000);}
@@ -1417,25 +2247,29 @@ window.addEventListener('load',loadDB);
    VISTA 2 — MAPA
 ══════════════════════════════════════════════════════════════════ */
 let MAP = null;
-let DB_GEO = null;
+// DB_GEO declarada globalmente arriba
 let MAP_MODE = 'puntos';    // 'puntos' | 'coropletico'
-let MAP_LAYERS = {};        // Leaflet layers by id
+let MAP_LAYERS = {};        // Leaflet layers by id — { id: L.geoJSON }
+let MAP_LAYER_META = {};    // Metadata by id — { id: {nombre,style,...} }
 let SECTOR_LAYER = null;    // Current cartera data layer
+let CLICK_PENDING = [];     // Debounce buffer for multi-layer popups
+let CLICK_TIMER   = null;
 let PENDING_GEOJSON = null; // SHP loaded but not saved yet
 let PENDING_FILENAME = '';
 
-// San Pedro Sula sector centroids (approximate)
-const SECTOR_CENTROIDS = {
-  'NOR-ESTE URBANO':   [15.515, -87.985],
-  'NOR-ESTE RURAL':    [15.555, -87.930],
-  'NOR-OESTE URBANO':  [15.515, -88.060],
-  'NOR-OESTE RURAL':   [15.560, -88.110],
-  'SUR-ESTE URBANO':   [15.480, -87.990],
-  'SUR-OESTE URBANO':  [15.478, -88.055],
-  'SUR-OESTE RURAL':   [15.440, -88.100],
+// San Pedro Sula sector centroids — overridden by user-edited values in localStorage
+const SECTOR_CENTROIDS_DEFAULT = {
+  'NOR-ESTE URBANO':      [15.515, -87.985],
+  'NOR-ESTE RURAL':       [15.555, -87.930],
+  'NOR-OESTE URBANO':     [15.515, -88.060],
+  'NOR-OESTE RURAL':      [15.560, -88.110],
+  'SUR-ESTE URBANO':      [15.480, -87.990],
+  'SUR-OESTE URBANO':     [15.478, -88.055],
+  'SUR-OESTE RURAL':      [15.440, -88.100],
   'SECTOR NO CATASTRADO': [15.500, -88.026],
   'SECTOR NO DEFINIDO':   [15.500, -88.026],
 };
+let SECTOR_CENTROIDS = { ...SECTOR_CENTROIDS_DEFAULT };
 
 const DEUDA_COLORS = ['#1a3a2a','#0e4f35','#0d6940','#0a8a55','#08a86a','#f0a500','#e07800','#c85000','#a02020','#7a0000'];
 
@@ -1485,9 +2319,38 @@ async function loadGeoDB() {
     if (!resp.ok) { console.warn('geodatos.db not found, starting fresh'); return; }
     const buf = await resp.arrayBuffer();
     DB_GEO = new SQL.Database(new Uint8Array(buf));
+    migrateGeoSchema();
   } catch(e) {
     console.warn('Could not load geodatos.db:', e.message);
   }
+}
+
+/* ── Render saved layers at startup ──────────────────────────── */
+function loadSavedLayers() {
+  if (!DB_GEO) return;
+  migrateGeoSchema();   // garantiza columnas antes de cualquier SELECT
+  try {
+    const rows = DB_GEO.exec(`SELECT id_capa,geojson,nombre,color,opacidad,
+      stroke_color,stroke_width,stroke_style,point_symbol,point_size,
+      join_campo,join_tipo,join_metrica,join_activa,join_db,join_tabla,
+      color_mode,color_campo,color_palette,color_breaks,color_map
+      FROM capas_geo WHERE visible=1 ORDER BY orden,id_capa`);
+    if (!rows.length) return;
+    rows[0].values.forEach(r => {
+      const [id,gjStr,nombre,color,opacidad,
+             stroke_color,stroke_width,stroke_style,point_symbol,point_size,
+             join_campo,join_tipo,join_metrica,join_activa,join_db,join_tabla,
+             color_mode,color_campo,color_palette,color_breaks,color_map] = r;
+      try {
+        addGeoJSONToMap(JSON.parse(gjStr), nombre,
+          { color,opacidad,stroke_color,stroke_width,stroke_style,
+            point_symbol,point_size,join_campo,join_tipo,join_metrica,join_activa,
+            join_db:join_db||'carteras',join_tabla:join_tabla||'cartera_mora',
+            color_mode:color_mode||'solid',color_campo,color_palette,color_breaks,color_map }, id);
+      } catch(e) { console.warn('Error rendering layer', id, e); }
+    });
+    loadGeoLayersList();
+  } catch(e) { console.warn('loadSavedLayers error:', e); }
 }
 
 /* ── Refresh cartera data on map ──────────────────────────────── */
@@ -1540,7 +2403,7 @@ function drawPuntos(data, campo, maxVal) {
     const col = getDeudaColor(val, maxVal);
 
     const circle = L.circleMarker(coord, {
-      radius: r, fillColor: col, color: '#0d1117',
+      radius: r, fillColor: col, color: getComputedStyle(document.documentElement).getPropertyValue('--bg-base').trim()||'#0d1117',
       weight: 2, fillOpacity: 0.82,
     });
 
@@ -1567,7 +2430,7 @@ function drawCoropletico(data, campo, maxVal) {
     ];
 
     const rect = L.rectangle(bounds, {
-      fillColor: col, color: '#0d1117',
+      fillColor: col, color: getComputedStyle(document.documentElement).getPropertyValue('--bg-base').trim()||'#0d1117',
       weight: 1, fillOpacity: 0.75,
     });
 
@@ -1601,6 +2464,9 @@ function updateZoneKPIs(d) {
   document.getElementById('mz-total').textContent   = 'L. ' + (d.total >= 1e6 ? (d.total/1e6).toFixed(2)+' M' : FM.format(d.total));
   document.getElementById('mz-predios').textContent  = FN.format(d.predios);
   document.getElementById('mz-contribs').textContent = FN.format(d.contribs);
+  // Mostrar popup de zona
+  const popup = document.getElementById('zona-kpi-popup');
+  if (popup) popup.style.display = 'block';
 }
 
 function updateLegend(maxVal, campo) {
@@ -1626,6 +2492,7 @@ function setModo(modo) {
 function openGeoPanel() {
   document.getElementById('geo-panel').classList.add('geo-panel-open');
   loadGeoLayersList();
+  refreshMapLegend();
 }
 function closeGeoPanel() {
   document.getElementById('geo-panel').classList.remove('geo-panel-open');
@@ -1669,6 +2536,8 @@ async function loadZIP(file) {
 
     document.getElementById('layer-preview').innerHTML =
       `<span style="color:var(--green)">&#10003;</span> ${numFeatures} geometrías cargadas (${geomType})`;
+    populateJoinFields(geojson);
+    populateColorFields(geojson);
 
   } catch(err) {
     console.error(err);
@@ -1687,173 +2556,1177 @@ function loadScript(src) {
 }
 
 /* ── Save layer to geodatos.db ──────────────────────────────────── */
-async function saveLayer() {
-  if (!PENDING_GEOJSON) { toast('Primero cargue un archivo ZIP con Shapefile.', 'error'); return; }
+/* ══════════════════════════════════════════════════════════════════
+   COLOR BY FIELD — PALETAS, CLASIFICACIÓN, LEYENDA
+   ─ Todo pre-computado; style() usa O(1) lookup ─
+══════════════════════════════════════════════════════════════════ */
 
-  const nombre = document.getElementById('lf-nombre').value.trim() || 'Nueva capa';
-  const desc   = document.getElementById('lf-desc').value.trim();
-  const color  = document.getElementById('lf-color').value;
-  const opac   = parseFloat(document.getElementById('lf-opacidad').value);
+/* ── 20 Paletas categóricas (cada una tiene 20 colores distintos) ─ */
+const CAT_PALETTES = {
+  'Cartografía':  ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#a65628','#f781bf','#999999','#1b9e77','#d95f02','#7570b3','#e7298a','#66a61e','#e6ab02','#a6761d','#666666','#8dd3c7','#ffffb3','#bebada','#fb8072'],
+  'Vibrante':     ['#e63946','#457b9d','#2a9d8f','#e9c46a','#f4a261','#264653','#e76f51','#06d6a0','#118ab2','#ffd166','#ef476f','#6a0572','#1d3557','#a8dadc','#f72585','#7209b7','#3a0ca3','#4361ee','#4cc9f0','#fb5607'],
+  'Pastel':       ['#ffd6a5','#fdffb6','#caffbf','#9bf6ff','#a0c4ff','#bdb2ff','#ffc6ff','#ffadad','#d4f0f0','#fce1e4','#d4e9e2','#eadcd4','#ede0d4','#e8cfc9','#c3d0b9','#b8d8d8','#f0e6ef','#dce3ed','#f7ece1','#e4f0e1'],
+  'Neon':         ['#ff0080','#00ffff','#80ff00','#ffff00','#ff6600','#9900ff','#00ff66','#ff0033','#0099ff','#ff9900','#33ff00','#ff00cc','#00ccff','#ffcc00','#cc00ff','#00ff99','#ff3300','#0033ff','#ff6699','#66ffcc'],
+  'Material':     ['#f44336','#2196f3','#4caf50','#ff9800','#9c27b0','#00bcd4','#ff5722','#607d8b','#e91e63','#3f51b5','#009688','#ffc107','#8bc34a','#673ab7','#03a9f4','#cddc39','#ff4081','#448aff','#69f0ae','#ffab40'],
+  'Tundra':       ['#6b4c3b','#8b7355','#a0896a','#c4a882','#d4b896','#7a9e87','#5b8c5a','#3d6b52','#2c4f3b','#1e3a2b','#4a6741','#6b8c59','#8aad6e','#aac885','#c8dca0','#9b8ea0','#7a6a8a','#5b4a6a','#8b5e52','#a87060'],
+  'Océano':       ['#03045e','#023e8a','#0077b6','#0096c7','#00b4d8','#48cae4','#90e0ef','#ade8f4','#caf0f8','#006d77','#83c5be','#edf6f9','#ffddd2','#e29578','#023e4e','#1a5276','#2874a6','#3498db','#85c1e9','#aed6f1'],
+  'Bosque':       ['#1b4332','#2d6a4f','#40916c','#52b788','#74c69d','#95d5b2','#b7e4c7','#d8f3dc','#081c15','#386641','#6a994e','#a7c957','#bc6c25','#dda15e','#606c38','#283618','#fefae0','#dad7cd','#a3b18a','#3a5a40'],
+  'Atardecer':    ['#03071e','#370617','#6a040f','#9d0208','#d00000','#dc2f02','#e85d04','#f48c06','#faa307','#ffba08','#e63946','#f4a261','#e9c46a','#2a9d8f','#264653','#d62828','#f77f00','#fcbf49','#eae2b7','#003049'],
+  'Metro':        ['#003f5c','#2f4b7c','#665191','#a05195','#d45087','#f95d6a','#ff7c43','#ffa600','#00876c','#3d9c73','#67ae79','#90c080','#b8d292','#dde4a7','#4d9de0','#e15554','#e1bc29','#3bb273','#7768ae','#ef9b00'],
+  'Retro':        ['#cb4b16','#dc322f','#268bd2','#2aa198','#859900','#6c71c4','#d33682','#b58900','#073642','#586e75','#657b83','#839496','#93a1a1','#eee8d5','#fdf6e3','#c4571f','#af4f3b','#8a3324','#622e22','#4a1f18'],
+  'Mineral':      ['#264653','#287271','#2a9d8f','#e9c46a','#f4a261','#e76f51','#e63946','#457b9d','#a8dadc','#1d3557','#4a4e69','#9a8c98','#c9ada7','#f2e9e4','#22223b','#6d6875','#b5838d','#e5989b','#ffb4a2','#ffcdb2'],
+  'Otoño':        ['#7b2d00','#a03000','#c75e00','#e88b00','#ffb703','#fb8500','#e36414','#9b2226','#ae2012','#bb3e03','#ca6702','#ee9b00','#94d2bd','#0a9396','#005f73','#001219','#8ecae6','#219ebc','#023047','#ffb703'],
+  'Lavanda':      ['#3d0066','#5b0098','#7400b8','#8900c1','#9d00d6','#b100e8','#c100f5','#d600ff','#c77dff','#9b5de5','#f72585','#b5179e','#7209b7','#560bad','#480ca8','#3a0ca3','#3f37c9','#4361ee','#4895ef','#4cc9f0'],
+  'Coral':        ['#590d22','#800f2f','#a4133c','#c9184a','#ff4d6d','#ff758f','#ff8fa3','#ffb3c1','#ffccd5','#fff0f3','#f72585','#7209b7','#3a0ca3','#4361ee','#4cc9f0','#023e8a','#0077b6','#0096c7','#00b4d8','#90e0ef'],
+  'Turquesa':     ['#004d40','#00695c','#00796b','#00897b','#009688','#26a69a','#4db6ac','#80cbc4','#b2dfdb','#e0f2f1','#006064','#00838f','#0097a7','#00acc1','#00bcd4','#26c6da','#4dd0e1','#80deea','#b2ebf2','#e0f7fa'],
+  'Grafito':      ['#212529','#343a40','#495057','#6c757d','#adb5bd','#ced4da','#dee2e6','#e9ecef','#f8f9fa','#000000','#1a1a2e','#16213e','#0f3460','#533483','#e94560','#f5a623','#7ed321','#4a90e2','#9013fe','#417505'],
+  'Fresa':        ['#6a0572','#890093','#a100b5','#c200d7','#d600f5','#e600ff','#ee5aff','#f4aaff','#f9d4ff','#fce8ff','#c91578','#e01c92','#f023ac','#f72fbf','#f440ca','#f75ad4','#fa6fdc','#fb88e3','#fda5ec','#fec6f3'],
+  'Manantial':    ['#0d2137','#0e3a5c','#0f5280','#1168a0','#147ec2','#1894e4','#37a8f5','#68bcf7','#9cd0f9','#d0e8fc','#004e89','#1a659e','#31aaf0','#73c2fb','#a9d6e5','#023e8a','#0077b6','#0096c7','#48cae4','#caf0f8'],
+  'Solar':        ['#03071e','#6a040f','#9d0208','#d00000','#e85d04','#f48c06','#faa307','#ffba08','#ffe566','#fff8e1','#590d22','#800f2f','#a4133c','#c9184a','#ff4d6d','#ff758f','#023e8a','#0077b6','#0096c7','#00b4d8'],
+};
 
-  const gj        = PENDING_GEOJSON;
-  const features  = gj.features || [];
-  const geomType  = features[0]?.geometry?.type || 'Unknown';
-  const gjStr     = JSON.stringify(gj);
+/* ── 10 Paletas secuenciales para campos numéricos (10 stops c/u) ─ */
+const SEQ_PALETTES = {
+  'Naranja-Rojo':  ['#fff7ec','#fee8c8','#fdd49e','#fdbb84','#fc8d59','#ef6548','#d7301f','#b30000','#7f0000','#4a0000'],
+  'Verde-Azul':    ['#f7fcf0','#e0f3db','#ccebc5','#a8ddb5','#7bccc4','#4eb3d3','#2b8cbe','#0868ac','#084081','#042040'],
+  'Púrpura':       ['#fcfbfd','#efedf5','#dadaeb','#bcbddc','#9e9ac8','#807dba','#6a51a3','#54278f','#3f007d','#1a004a'],
+  'Tierra':        ['#fffde7','#fff8c5','#ffee93','#ffe060','#ffc107','#ff9800','#f57c00','#e64a19','#bf360c','#7f1500'],
+  'Espectro':      ['#313695','#4575b4','#74add1','#abd9e9','#e0f3f8','#fee090','#fdae61','#f46d43','#d73027','#a50026'],
+  'Calor':         ['#ffffe5','#fff7bc','#fee391','#fec44f','#fe9929','#ec7014','#cc4c02','#993404','#662506','#391000'],
+  'Frío':          ['#f7fbff','#deebf7','#c6dbef','#9ecae1','#6baed6','#4292c6','#2171b5','#08519c','#08306b','#03143a'],
+  'Semáforo':      ['#006400','#228b22','#32cd32','#7fff00','#adff2f','#ffff00','#ffd700','#ff8c00','#ff4500','#dc143c'],
+  'Monotono':      ['#f7f7f7','#d9d9d9','#bdbdbd','#969696','#737373','#525252','#252525','#000000','#000000','#000000'],
+  'Divergente':    ['#006837','#1a9850','#66bd63','#a6d96a','#d9ef8b','#fee08b','#fdae61','#f46d43','#d73027','#a50026'],
+};
 
-  // Compute bbox
-  let minX=180,minY=90,maxX=-180,maxY=-90;
-  features.forEach(f => {
-    const coords = getAllCoords(f.geometry);
-    coords.forEach(([lng, lat]) => {
-      if (lng < minX) minX = lng; if (lng > maxX) maxX = lng;
-      if (lat < minY) minY = lat; if (lat > maxY) maxY = lat;
-    });
+/* ── Analizar campo del GeoJSON: tipo + estadísticas ─────────────── */
+function analyzeField(gj, campo) {
+  if (!gj || !gj.features || !campo) return null;
+  const vals = gj.features.map(f => (f.properties||{})[campo])
+                           .filter(v => v !== null && v !== undefined && v !== '');
+  if (!vals.length) return { type: 'empty', count: 0 };
+
+  // Detectar tipo: si > 60% de valores no son numéricos → categórico
+  const numericCount = vals.filter(v => !isNaN(parseFloat(v)) && isFinite(v)).length;
+  const isNumeric    = numericCount / vals.length > 0.6;
+
+  if (!isNumeric) {
+    const uniques = [...new Set(vals.map(v => String(v).trim()))].sort();
+    return {
+      type:    'categorical',
+      count:   vals.length,
+      uniques: uniques,
+      n:       uniques.length,
+    };
+  } else {
+    const nums = vals.map(v => parseFloat(v)).filter(v => isFinite(v)).sort((a,b)=>a-b);
+    const n    = nums.length;
+    const sum  = nums.reduce((a,b)=>a+b,0);
+    const mean = sum/n;
+    const variance = nums.reduce((a,v)=>a+(v-mean)**2,0)/n;
+    const q1   = nums[Math.floor(n*0.25)];
+    const med  = nums[Math.floor(n*0.5)];
+    const q3   = nums[Math.floor(n*0.75)];
+    // Sugerir número de clases: regla de Sturges k=1+log2(n), Jenks sería ideal pero es costoso
+    const suggestedK = Math.min(10, Math.max(3, Math.round(1 + Math.log2(n))));
+    return {
+      type:       'numeric',
+      count:      n,
+      min:        nums[0],
+      max:        nums[n-1],
+      mean:       mean,
+      std:        Math.sqrt(variance),
+      q1, median: med, q3,
+      suggestedK,
+    };
+  }
+}
+
+/* ── Construir breaks (cuantil o intervalo igual) ─────────────────── */
+function computeBreaks(gj, campo, k, method) {
+  const vals = (gj.features || [])
+    .map(f => parseFloat((f.properties||{})[campo]))
+    .filter(v => isFinite(v))
+    .sort((a,b)=>a-b);
+  if (!vals.length) return [];
+
+  const min = vals[0], max = vals[vals.length-1];
+  if (min === max) return [{ min, max, label:`${min}` }];
+
+  const breaks = [];
+  if (method === 'quantile') {
+    for (let i=0; i<k; i++) {
+      const lo = vals[Math.floor(i*vals.length/k)];
+      const hi = vals[Math.min(vals.length-1, Math.floor((i+1)*vals.length/k)-1)];
+      breaks.push({ min: lo, max: hi });
+    }
+  } else { // equal interval
+    const step = (max - min) / k;
+    for (let i=0; i<k; i++) {
+      breaks.push({ min: min + i*step, max: i===k-1 ? max : min+(i+1)*step });
+    }
+  }
+  // Remove duplicates
+  const out = [], seen = new Set();
+  breaks.forEach(b => {
+    const key = `${b.min.toFixed(4)}_${b.max.toFixed(4)}`;
+    if (!seen.has(key)) { seen.add(key); out.push(b); }
   });
+  return out;
+}
 
-  // If we don't have a persistent geodatos.db yet, create in-memory
-  if (!DB_GEO) {
-    const SQL = window._SQL;
-    DB_GEO = new SQL.Database();
-    DB_GEO.run(`CREATE TABLE IF NOT EXISTS capas_geo (
-      id_capa INTEGER PRIMARY KEY AUTOINCREMENT,
-      nombre TEXT, descripcion TEXT, tipo_geometria TEXT,
-      color TEXT DEFAULT '#f0a500', opacidad REAL DEFAULT 0.6,
-      visible INTEGER DEFAULT 1, orden INTEGER DEFAULT 0,
-      geojson TEXT, archivo_origen TEXT, num_features INTEGER DEFAULT 0,
-      bbox_minx REAL, bbox_miny REAL, bbox_maxx REAL, bbox_maxy REAL,
-      cargado_en TEXT DEFAULT CURRENT_TIMESTAMP)`);
+/* ── Asignar colores de paleta secuencial a N breaks ─────────────── */
+function assignSeqColors(breaks, paletteName) {
+  const pal = SEQ_PALETTES[paletteName] || SEQ_PALETTES['Naranja-Rojo'];
+  return breaks.map((b, i) => {
+    const idx = Math.round(i * (pal.length-1) / Math.max(breaks.length-1, 1));
+    return { ...b, color: pal[idx] };
+  });
+}
+
+/* ── Construir función de color O(1) para el render ──────────────── */
+function buildColorFn(style, gj) {
+  const mode = style.color_mode || 'solid';
+  if (mode === 'solid' || !style.color_campo) {
+    const fc = style.color || '#f0a500';
+    return () => fc;
   }
 
-  DB_GEO.run(
-    `INSERT INTO capas_geo (nombre, descripcion, tipo_geometria, color, opacidad, geojson, archivo_origen, num_features, bbox_minx, bbox_miny, bbox_maxx, bbox_maxy)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-    [nombre, desc, geomType, color, opac, gjStr, PENDING_FILENAME, features.length, minX, minY, maxX, maxY]
-  );
+  const campo = style.color_campo;
 
-  // Render the layer on map
-  addGeoJSONToMap(gj, nombre, color, opac, DB_GEO.exec('SELECT last_insert_rowid()')[0].values[0][0]);
+  if (mode === 'categorical') {
+    let cmap = {};
+    try { cmap = JSON.parse(style.color_map || '{}'); } catch(e) {}
+    return (feature) => {
+      const key = String((feature.properties||{})[campo] ?? '').trim();
+      return cmap[key] || cmap[key.toUpperCase()] || '#999999';
+    };
+  }
 
-  // Download updated geodatos.db for persistence
-  exportGeoDB();
+  if (mode === 'quantile' || mode === 'equal') {
+    let breaks = [];
+    try { breaks = JSON.parse(style.color_breaks || '[]'); } catch(e) {}
+    if (!breaks.length) return () => style.color || '#f0a500';
+    return (feature) => {
+      const val = parseFloat((feature.properties||{})[campo]);
+      if (!isFinite(val)) return '#555';
+      for (let i=breaks.length-1; i>=0; i--) {
+        if (val >= breaks[i].min) return breaks[i].color || '#888';
+      }
+      return breaks[0].color || '#888';
+    };
+  }
 
-  cancelLayer();
-  loadGeoLayersList();
-  toast(`Capa "${nombre}" guardada — ${features.length} geometrías`, 'success');
+  return () => style.color || '#f0a500';
 }
 
-function getAllCoords(geom) {
-  const type = geom.type;
-  if (type === 'Point') return [geom.coordinates];
-  if (type === 'LineString' || type === 'MultiPoint') return geom.coordinates;
-  if (type === 'Polygon' || type === 'MultiLineString') return geom.coordinates.flat();
-  if (type === 'MultiPolygon') return geom.coordinates.flat(2);
-  return [];
+/* ══════════════════════════════════════════════════════════════════
+   FORM INTERACTIONS — clasificación por campo
+══════════════════════════════════════════════════════════════════ */
+
+// Llamado cuando cambia el modo (sólido vs por campo)
+function onColorModeChange() {
+  const mode = document.getElementById('lf-color-mode').value;
+  document.getElementById('lf-solid-wrap').style.display   = mode==='solid' ? 'block' : 'none';
+  document.getElementById('lf-classify-wrap').style.display= mode!=='solid' ? 'block' : 'none';
+  if (mode !== 'solid') onColorFieldChange();
 }
+
+// Llamado cuando cambia el campo de clasificación
+function onColorFieldChange() {
+  const campo = document.getElementById('lf-color-campo').value;
+  if (!campo || !PENDING_GEOJSON) return;
+  const analysis = analyzeField(PENDING_GEOJSON, campo);
+  if (!analysis || analysis.type==='empty') return;
+
+  document.getElementById('lf-classify-type').textContent =
+    analysis.type==='categorical'
+      ? `Categórico · ${analysis.n} valores únicos`
+      : `Numérico · rango: ${fmtN(analysis.min)} – ${fmtN(analysis.max)} · σ=${fmtN(analysis.std)} · sugeridos: ${analysis.suggestedK} rangos`;
+
+  const mode = document.getElementById('lf-color-mode').value;
+  if (mode === 'categorical' || analysis.type==='categorical') {
+    document.getElementById('lf-cat-wrap').style.display = 'block';
+    document.getElementById('lf-num-wrap').style.display = 'none';
+    renderCatPaletteUI(analysis.uniques);
+    document.getElementById('lf-color-mode').value = 'categorical';
+  } else {
+    document.getElementById('lf-cat-wrap').style.display = 'none';
+    document.getElementById('lf-num-wrap').style.display = 'block';
+    document.getElementById('lf-num-k').value = analysis.suggestedK;
+    renderNumPaletteUI();
+    renderBreaksTable();
+  }
+}
+
+// Previsualización de paletas categóricas (grid de 5×4)
+function renderCatPaletteUI(uniques) {
+  const container = document.getElementById('lf-cat-palettes');
+  const curPal    = document.getElementById('lf-color-palette').value || 'Cartografía';
+  container.innerHTML = Object.keys(CAT_PALETTES).map(name => {
+    const swatch = CAT_PALETTES[name].slice(0, Math.min(6, uniques?.length||6))
+      .map(c=>`<span style="display:inline-block;width:10px;height:10px;background:${c};border-radius:1px;margin:0.5px"></span>`).join('');
+    return `<div class="pal-swatch ${name===curPal?'pal-active':''}" onclick="selectCatPalette('${name}')" title="${name}">
+      <div style="display:flex;flex-wrap:wrap;gap:0;margin-bottom:3px">${swatch}</div>
+      <div style="font-size:9px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
+    </div>`;
+  }).join('');
+  renderCatPreview(uniques);
+}
+
+function selectCatPalette(name) {
+  document.getElementById('lf-color-palette').value = name;
+  const campo  = document.getElementById('lf-color-campo').value;
+  const uniques= PENDING_GEOJSON ? analyzeField(PENDING_GEOJSON, campo)?.uniques : [];
+  renderCatPaletteUI(uniques);
+}
+
+function renderCatPreview(uniques) {
+  if (!uniques) return;
+  const palName = document.getElementById('lf-color-palette').value || 'Cartografía';
+  const pal     = CAT_PALETTES[palName] || CAT_PALETTES['Cartografía'];
+  const container = document.getElementById('lf-cat-preview');
+  const shown   = uniques.slice(0, 20);
+  container.innerHTML = shown.map((v,i) =>
+    `<div style="display:flex;align-items:center;gap:6px;padding:2px 0;font-size:10px">
+       <span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:${pal[i%pal.length]};flex-shrink:0"></span>
+       <span style="color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v}</span>
+     </div>`
+  ).join('') +
+  (uniques.length>20
+    ? `<div style="font-size:10px;color:var(--amber);margin-top:4px">⚠ ${uniques.length-20} valores adicionales → color gris</div>`
+    : '');
+}
+
+// Previsualización de paletas numéricas (ramp 5×2)
+function renderNumPaletteUI() {
+  const container = document.getElementById('lf-num-palettes');
+  const curPal    = document.getElementById('lf-color-palette').value || 'Naranja-Rojo';
+  container.innerHTML = Object.keys(SEQ_PALETTES).map(name => {
+    const ramp = SEQ_PALETTES[name]
+      .map(c=>`<span style="display:inline-block;flex:1;height:12px;background:${c}"></span>`).join('');
+    return `<div class="pal-swatch pal-swatch-h ${name===curPal?'pal-active':''}" onclick="selectNumPalette('${name}')" title="${name}">
+      <div style="display:flex;width:100%;height:12px;border-radius:2px;overflow:hidden;margin-bottom:3px">${ramp}</div>
+      <div style="font-size:9px;color:var(--text-muted)">${name}</div>
+    </div>`;
+  }).join('');
+}
+
+function selectNumPalette(name) {
+  document.getElementById('lf-color-palette').value = name;
+  renderNumPaletteUI();
+  renderBreaksTable();
+}
+
+// Renderizar tabla de rangos editables
+function renderBreaksTable() {
+  const campo   = document.getElementById('lf-color-campo').value;
+  const k       = parseInt(document.getElementById('lf-num-k').value) || 5;
+  const method  = document.getElementById('lf-num-method').value;
+  const palName = document.getElementById('lf-color-palette').value || 'Naranja-Rojo';
+  if (!campo || !PENDING_GEOJSON) return;
+
+  const rawBreaks  = computeBreaks(PENDING_GEOJSON, campo, k, method);
+  const withColors = assignSeqColors(rawBreaks, palName);
+
+  const FN = new Intl.NumberFormat('es-HN', { maximumFractionDigits: 2 });
+  const container = document.getElementById('lf-breaks-table');
+  container.innerHTML = withColors.map((b,i) => `
+    <div class="breaks-row" data-i="${i}">
+      <span style="display:inline-block;width:14px;height:14px;border-radius:2px;background:${b.color};flex-shrink:0;border:1px solid var(--border)"></span>
+      <input type="number" class="breaks-min table-search" data-i="${i}" value="${FN.format(b.min)}"
+        style="width:80px;margin:0;font-size:10px;padding:3px 5px" placeholder="Desde"
+        onchange="updateBreakVal(${i},'min',this.value)">
+      <span style="color:var(--text-muted);font-size:11px">–</span>
+      <input type="number" class="breaks-max table-search" data-i="${i}" value="${FN.format(b.max)}"
+        style="width:80px;margin:0;font-size:10px;padding:3px 5px" placeholder="Hasta"
+        onchange="updateBreakVal(${i},'max',this.value)">
+      <input type="color" value="${b.color}" class="lf-color-input"
+        style="width:30px;height:26px;padding:1px;flex-shrink:0"
+        onchange="updateBreakColor(${i},this.value)">
+    </div>`).join('');
+
+  // Guardar los breaks actuales en un dataset del contenedor para lectura en saveLayer
+  container.dataset.breaks = JSON.stringify(withColors);
+}
+
+// Actualizaciones inline de los rangos
+function updateBreakVal(i, prop, val) {
+  const container = document.getElementById('lf-breaks-table');
+  let breaks = [];
+  try { breaks = JSON.parse(container.dataset.breaks || '[]'); } catch(e) {}
+  if (breaks[i]) breaks[i][prop] = parseFloat(val);
+  container.dataset.breaks = JSON.stringify(breaks);
+}
+function updateBreakColor(i, color) {
+  const container = document.getElementById('lf-breaks-table');
+  let breaks = [];
+  try { breaks = JSON.parse(container.dataset.breaks || '[]'); } catch(e) {}
+  if (breaks[i]) breaks[i].color = color;
+  container.dataset.breaks = JSON.stringify(breaks);
+  // Update the preview swatch next to the input
+  const row = container.querySelector(`.breaks-row[data-i="${i}"] span`);
+  if (row) row.style.background = color;
+}
+
+/* ── Poblar el selector de campos para clasificación ─────────────── */
+function populateColorFields(gj) {
+  const sel = document.getElementById('lf-color-campo');
+  if (!sel || !gj || !gj.features || !gj.features[0]) return;
+  sel.innerHTML = '<option value="">— Seleccione campo —</option>';
+  const props = gj.features[0].properties || {};
+  Object.keys(props).forEach(k => {
+    const opt = document.createElement('option');
+    opt.value = k; opt.textContent = k;
+    sel.appendChild(opt);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   LEYENDA DE MAPA — superpuesta, actualiza por viewport
+══════════════════════════════════════════════════════════════════ */
+
+let LEGEND_CONTROL = null;
+
+function buildLegendHtml(style, lyrId) {
+  const mode = style.color_mode || 'solid';
+  if (mode === 'solid') return '';
+
+  const nombre = style._nombre || 'Capa';
+  const campo  = style.color_campo;
+
+  if (mode === 'categorical') {
+    let cmap = {};
+    try { cmap = JSON.parse(style.color_map || '{}'); } catch(e) {}
+    const entries = Object.entries(cmap).slice(0, 20);
+    if (!entries.length) return '';
+    const rows = entries.map(([k,c]) =>
+      `<div style="display:flex;align-items:center;gap:5px;margin:2px 0">
+         <span style="width:11px;height:11px;background:${c};border-radius:2px;flex-shrink:0;border:1px solid rgba(255,255,255,.2)"></span>
+         <span style="font-size:10px;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px">${k}</span>
+       </div>`).join('');
+    return `<div class="map-legend" id="legend-${lyrId}">
+      <div style="font-size:10px;font-weight:700;color:var(--amber);margin-bottom:5px;font-family:var(--font-display)">${nombre}</div>
+      <div style="font-size:9px;color:var(--text-muted);margin-bottom:5px">${campo}</div>
+      ${rows}
+      ${Object.keys(cmap).length>20?`<div style="font-size:9px;color:var(--text-muted);margin-top:3px">…y ${Object.keys(cmap).length-20} más</div>`:''}
+    </div>`;
+  }
+
+  if (mode === 'quantile' || mode === 'equal') {
+    let breaks = [];
+    try { breaks = JSON.parse(style.color_breaks || '[]'); } catch(e) {}
+    if (!breaks.length) return '';
+    const FN = new Intl.NumberFormat('es-HN', { maximumFractionDigits: 0 });
+    const rows = breaks.map(b =>
+      `<div style="display:flex;align-items:center;gap:5px;margin:2px 0">
+         <span style="width:11px;height:11px;background:${b.color};border-radius:2px;flex-shrink:0;border:1px solid rgba(255,255,255,.2)"></span>
+         <span style="font-size:10px;color:var(--text-primary)">${FN.format(b.min)} – ${FN.format(b.max)}</span>
+       </div>`).join('');
+    return `<div class="map-legend" id="legend-${lyrId}">
+      <div style="font-size:10px;font-weight:700;color:var(--amber);margin-bottom:5px;font-family:var(--font-display)">${nombre}</div>
+      <div style="font-size:9px;color:var(--text-muted);margin-bottom:5px">${campo}</div>
+      ${rows}
+    </div>`;
+  }
+  return '';
+}
+
+function refreshMapLegend() {
+  const container = document.getElementById('map-legend-container');
+  if (!container || !MAP) return;
+  const htmls = Object.entries(MAP_LAYER_META)
+    .filter(([id]) => MAP_LAYERS[id])
+    .map(([id, meta]) => buildLegendHtml({...meta.style, _nombre: meta.nombre}, id))
+    .filter(Boolean);
+  container.innerHTML = htmls.join('');
+  container.style.display = htmls.length ? 'flex' : 'none';
+}
+
+
+
+/* ══════════════════════════════════════════════════════════════════
+   GEO — ESQUEMA EXTENDIDO + MIGRACIÓN ALTER TABLE
+══════════════════════════════════════════════════════════════════ */
+
+const GEO_SCHEMA_V2 = `CREATE TABLE IF NOT EXISTS capas_geo (
+  id_capa          INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre           TEXT,
+  descripcion      TEXT,
+  tipo_geometria   TEXT,
+  color            TEXT    DEFAULT '#f0a500',
+  opacidad         REAL    DEFAULT 0.6,
+  stroke_color     TEXT    DEFAULT '#ffffff',
+  stroke_width     REAL    DEFAULT 1.0,
+  stroke_style     TEXT    DEFAULT 'solid',
+  point_symbol     TEXT    DEFAULT 'circle',
+  point_size       REAL    DEFAULT 7,
+  visible          INTEGER DEFAULT 1,
+  orden            INTEGER DEFAULT 0,
+  geojson          TEXT,
+  archivo_origen   TEXT,
+  num_features     INTEGER DEFAULT 0,
+  bbox_minx        REAL, bbox_miny REAL, bbox_maxx REAL, bbox_maxy REAL,
+  join_campo       TEXT    DEFAULT NULL,
+  join_tipo        TEXT    DEFAULT 'sector',
+  join_metrica     TEXT    DEFAULT 'total',
+  join_activa      INTEGER DEFAULT 0,
+  join_db          TEXT    DEFAULT 'carteras',
+  join_tabla       TEXT    DEFAULT 'cartera_mora',
+  color_mode       TEXT    DEFAULT 'solid',
+  color_campo      TEXT    DEFAULT NULL,
+  color_palette    TEXT    DEFAULT NULL,
+  color_breaks     TEXT    DEFAULT NULL,
+  color_map        TEXT    DEFAULT NULL,
+  cargado_en       TEXT    DEFAULT CURRENT_TIMESTAMP
+)`;
+
+function migrateGeoSchema() {
+  if (!DB_GEO) return;
+  DB_GEO.run(GEO_SCHEMA_V2);
+  // ALTER TABLE para columnas nuevas si ya existe la tabla con schema viejo
+  const cols = DB_GEO.exec("PRAGMA table_info(capas_geo)");
+  const existing = cols.length ? cols[0].values.map(r => r[1]) : [];
+  const newCols = [
+    ["stroke_color",  "TEXT    DEFAULT '#ffffff'"],
+    ["stroke_width",  "REAL    DEFAULT 1.0"],
+    ["stroke_style",  "TEXT    DEFAULT 'solid'"],
+    ["point_symbol",  "TEXT    DEFAULT 'circle'"],
+    ["point_size",    "REAL    DEFAULT 7"],
+    ["join_campo",    "TEXT    DEFAULT NULL"],
+    ["join_tipo",     "TEXT    DEFAULT 'sector'"],
+    ["join_metrica",  "TEXT    DEFAULT 'total'"],
+    ["join_activa",   "INTEGER DEFAULT 0"],
+    ["join_db",       "TEXT    DEFAULT 'carteras'"],
+    ["join_tabla",    "TEXT    DEFAULT 'cartera_mora'"],
+    ["color_mode",    "TEXT    DEFAULT 'solid'"],
+    ["color_campo",   "TEXT    DEFAULT NULL"],
+    ["color_palette", "TEXT    DEFAULT NULL"],
+    ["color_breaks",  "TEXT    DEFAULT NULL"],
+    ["color_map",     "TEXT    DEFAULT NULL"],
+  ];
+  newCols.forEach(([col, def]) => {
+    if (!existing.includes(col)) {
+      try { DB_GEO.run(`ALTER TABLE capas_geo ADD COLUMN ${col} ${def}`); } catch(e) {}
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   SÍMBOLOS SVG ESTILO ARCGIS
+══════════════════════════════════════════════════════════════════ */
+
+function makeSymbolIcon(symbol, size, fillColor, strokeColor, strokeWidth) {
+  const s  = size || 7;
+  const sw = strokeWidth || 1;
+  const fc = fillColor   || '#f0a500';
+  const sc = strokeColor || '#ffffff';
+  const d  = s * 2 + sw * 2 + 4;  // viewport total
+  const c  = d / 2;                // centro
+
+  let path = '';
+  switch ((symbol || 'circle').toLowerCase()) {
+    case 'circle':
+      path = `<circle cx="${c}" cy="${c}" r="${s}" fill="${fc}" stroke="${sc}" stroke-width="${sw}"/>`;
+      break;
+    case 'square': {
+      const h = s * 0.9;
+      path = `<rect x="${c-h}" y="${c-h}" width="${h*2}" height="${h*2}" fill="${fc}" stroke="${sc}" stroke-width="${sw}"/>`;
+      break;
+    }
+    case 'triangle': {
+      const t = s * 1.1;
+      path = `<polygon points="${c},${c-t} ${c-t},${c+t*0.7} ${c+t},${c+t*0.7}" fill="${fc}" stroke="${sc}" stroke-width="${sw}"/>`;
+      break;
+    }
+    case 'diamond': {
+      const t = s * 1.0;
+      path = `<polygon points="${c},${c-t} ${c+t},${c} ${c},${c+t} ${c-t},${c}" fill="${fc}" stroke="${sc}" stroke-width="${sw}"/>`;
+      break;
+    }
+    case 'star': {
+      const R = s, r = s * 0.45, pts = 5;
+      let star = '';
+      for (let i = 0; i < pts * 2; i++) {
+        const ang = (i * Math.PI / pts) - Math.PI / 2;
+        const rad = i % 2 === 0 ? R : r;
+        star += `${i ? 'L' : 'M'}${(c + rad * Math.cos(ang)).toFixed(2)},${(c + rad * Math.sin(ang)).toFixed(2)}`;
+      }
+      path = `<path d="${star}Z" fill="${fc}" stroke="${sc}" stroke-width="${sw}"/>`;
+      break;
+    }
+    case 'cross': {
+      const t = s * 0.35, h = s * 0.95;
+      path = `<rect x="${c-t}" y="${c-h}" width="${t*2}" height="${h*2}" fill="${fc}" stroke="${sc}" stroke-width="${sw}"/>` +
+             `<rect x="${c-h}" y="${c-t}" width="${h*2}" height="${t*2}" fill="${fc}" stroke="${sc}" stroke-width="${sw}"/>`;
+      break;
+    }
+    default:
+      path = `<circle cx="${c}" cy="${c}" r="${s}" fill="${fc}" stroke="${sc}" stroke-width="${sw}"/>`;
+  }
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${d}" height="${d}" viewBox="0 0 ${d} ${d}">${path}</svg>`;
+  return L.divIcon({
+    className: '',
+    html: svg,
+    iconSize:   [d, d],
+    iconAnchor: [c, c],
+    popupAnchor:[0, -c],
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   UNIÓN DATO GEOGRÁFICO ↔ CARTERA_MORA
+══════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════
+   JOIN CASCADEANTE — onJoinDbChange / onJoinTablaChange
+══════════════════════════════════════════════════════════════════ */
+
+const JOIN_CONFIG = {
+  carteras: {
+    label: 'Cartera de Mora',
+    tables: {
+      cartera_mora: {
+        label: 'cartera_mora',
+        joinCols: [
+          { value:'sector',          label:'Sector' },
+          { value:'clave_catastral', label:'Clave catastral' },
+          { value:'rmc',             label:'RMC' },
+        ],
+        metrics: [
+          { value:'deuda_total',    label:'Deuda total (L.)' },
+          { value:'predios',        label:'Predios únicos' },
+          { value:'contribuyentes', label:'Contribuyentes únicos' },
+        ],
+      },
+    },
+  },
+  cobros: {
+    label: 'Gestión de Cobros',
+    tables: {
+      gestiones: {
+        label: 'Gestiones',
+        joinCols: [
+          { value:'clave_catastral', label:'Clave catastral' },
+          { value:'rmc',             label:'RMC' },
+        ],
+        metrics: [
+          { value:'n_gestiones',       label:'N° gestiones' },
+          { value:'monto_comprometido', label:'Monto comprometido (L.)' },
+        ],
+      },
+      acuerdos_pago: {
+        label: 'Acuerdos de pago',
+        joinCols: [
+          { value:'clave_catastral', label:'Clave catastral' },
+          { value:'rmc',             label:'RMC' },
+        ],
+        metrics: [
+          { value:'n_acuerdos',  label:'N° acuerdos' },
+          { value:'monto_total', label:'Monto total acuerdos (L.)' },
+        ],
+      },
+    },
+  },
+};
+
+function onJoinDbChange() {
+  const db  = document.getElementById('lf-join-db').value;
+  const tw  = document.getElementById('lf-join-tabla-wrap');
+  const kw  = document.getElementById('lf-join-keys-wrap');
+  const sel = document.getElementById('lf-join-tabla');
+  if (!db) { tw.style.display='none'; kw.style.display='none'; return; }
+  const cfg = JOIN_CONFIG[db];
+  sel.innerHTML = Object.entries(cfg.tables)
+    .map(([k,v]) => `<option value="${k}">${v.label}</option>`).join('');
+  tw.style.display = 'block';
+  kw.style.display = 'none';
+  onJoinTablaChange();
+}
+
+function onJoinTablaChange() {
+  const db    = document.getElementById('lf-join-db').value;
+  const tabla = document.getElementById('lf-join-tabla').value;
+  const kw    = document.getElementById('lf-join-keys-wrap');
+  if (!db || !tabla) { kw.style.display='none'; return; }
+  const tCfg = JOIN_CONFIG[db]?.tables[tabla];
+  if (!tCfg) { kw.style.display='none'; return; }
+
+  // Populate DB-side join column
+  document.getElementById('lf-join-tipo').innerHTML =
+    tCfg.joinCols.map(c => `<option value="${c.value}">${c.label}</option>`).join('');
+
+  // Populate metrics
+  document.getElementById('lf-join-metrica').innerHTML =
+    tCfg.metrics.map(m => `<option value="${m.value}">${m.label}</option>`).join('');
+
+  kw.style.display = 'block';
+
+  // Preview help text
+  const preview = document.getElementById('lf-join-preview');
+  if (preview) preview.textContent =
+    `Cada geometría se coloreará según: ${tCfg.metrics[0].label}`;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   getJoinData — soporte para carteras Y cobros
+══════════════════════════════════════════════════════════════════ */
+
+function getJoinData(joinCampo, joinTipo, joinMetrica, joinDb, joinTabla) {
+  const db     = joinDb    || 'carteras';
+  const tabla  = joinTabla || 'cartera_mora';
+  const useDB  = db === 'cobros' ? DB_COB : DB;
+  if (!useDB || !joinTipo) return {};
+
+  let metCol;
+  // Cartera de mora
+  if (tabla === 'cartera_mora') {
+    metCol = joinMetrica === 'predios'        ? 'COUNT(DISTINCT clave_catastral)'
+           : joinMetrica === 'contribuyentes' ? 'COUNT(DISTINCT rmc)'
+           : "SUM(CAST(REPLACE(COALESCE(total_apagar,'0'),',','') AS REAL))";
+  }
+  // Gestiones
+  else if (tabla === 'gestiones') {
+    metCol = joinMetrica === 'monto_comprometido'
+           ? 'SUM(COALESCE(monto_comprometido,0))'
+           : 'COUNT(*)';
+  }
+  // Acuerdos de pago
+  else if (tabla === 'acuerdos_pago') {
+    metCol = joinMetrica === 'monto_total'
+           ? 'SUM(COALESCE(monto_total,0))'
+           : 'COUNT(*)';
+  }
+  else { metCol = 'COUNT(*)'; }
+
+  try {
+    const rows = useDB.exec(
+      `SELECT ${joinTipo}, ${metCol} as v FROM ${tabla} WHERE 1=1 GROUP BY ${joinTipo}`);
+    if (!rows.length) return {};
+    const map = {};
+    rows[0].values.forEach(([k,v]) => { if (k) map[String(k).trim().toUpperCase()] = v || 0; });
+    return map;
+  } catch(e) { console.warn('getJoinData error:', e); return {}; }
+}
+
+function getJoinColor(val, maxVal) {
+  if (!val || !maxVal) return 'rgba(42,52,71,0.4)';
+  return getDeudaColor(val, maxVal);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   addGeoJSONToMap — con soporte join_db / join_tabla + meta registry
+══════════════════════════════════════════════════════════════════ */
+
+function addGeoJSONToMap(gj, nombre, style, id) {
+  if (MAP_LAYERS[id]) { MAP.removeLayer(MAP_LAYERS[id]); }
+
+  if (typeof style === 'string') {
+    style = { color: style, opacidad: 0.6, stroke_color: '#ffffff', stroke_width: 1,
+              stroke_style: 'solid', point_symbol: 'circle', point_size: 7,
+              join_activa: 0, join_campo: null, join_tipo: 'sector',
+              join_metrica: 'deuda_total', join_db: 'carteras', join_tabla: 'cartera_mora' };
+  }
+
+  const fc          = style.color        || '#f0a500';
+  const opac        = style.opacidad     || 0.6;
+  const sc          = style.stroke_color || '#ffffff';
+  const sw          = style.stroke_width || 1;
+  const ss          = style.stroke_style || 'solid';
+  const sym         = style.point_symbol || 'circle';
+  const sz          = style.point_size   || 7;
+  const joinActiva  = style.join_activa  || 0;
+  const joinCampo   = style.join_campo   || null;
+  const joinTipo    = style.join_tipo    || 'sector';
+  const joinMetrica = style.join_metrica || 'deuda_total';
+  const joinDb      = style.join_db      || 'carteras';
+  const joinTabla   = style.join_tabla   || 'cartera_mora';
+  const dashArray   = ss === 'dashed' ? '8,4' : ss === 'dotted' ? '2,4' : null;
+
+  let joinMap = {}, joinMax = 0;
+  if (joinActiva && joinCampo) {
+    joinMap = getJoinData(joinCampo, joinTipo, joinMetrica, joinDb, joinTabla);
+    joinMax = Math.max(...Object.values(joinMap).filter(v=>v>0), 1);
+  }
+
+  // Pre-compute color function O(1) per feature — no recalculation per-render
+  const colorFn = buildColorFn(style, gj);
+
+  // Store metadata for multi-layer popup + legend
+  MAP_LAYER_META[id] = { nombre, style, joinMap, joinMax, joinCampo, joinTipo, joinMetrica, joinDb, joinTabla };
+
+  const lyr = L.geoJSON(gj, {
+    style: (feature) => {
+      // Join color overrides classification color if both active
+      let fillColor = colorFn(feature);
+      if (joinActiva && joinCampo) {
+        const key = String((feature.properties||{})[joinCampo]||'').trim().toUpperCase();
+        if (joinMap[key] !== undefined)
+          fillColor = getJoinColor(joinMap[key], joinMax);
+      }
+      return { color:sc, weight:sw, dashArray, fillColor, fillOpacity:opac, opacity:1 };
+    },
+    pointToLayer: (feature, latlng) => {
+      let fillColor = colorFn(feature);
+      if (joinActiva && joinCampo) {
+        const key = String((feature.properties||{})[joinCampo]||'').trim().toUpperCase();
+        if (joinMap[key] !== undefined) fillColor = getJoinColor(joinMap[key], joinMax);
+      }
+      return L.marker(latlng, { icon: makeSymbolIcon(sym, sz, fillColor, sc, sw) });
+    },
+    onEachFeature: (feature, layer) => {
+      layer.on('click', (e) => {
+        L.DomEvent.stopPropagation(e);
+        const meta = MAP_LAYER_META[id] || {};
+        CLICK_PENDING.push({ layer, feature, latlng: e.latlng,
+          nombre, style, joinMap, joinMax, joinCampo, joinTipo, joinMetrica });
+        clearTimeout(CLICK_TIMER);
+        CLICK_TIMER = setTimeout(() => {
+          if (CLICK_PENDING.length === 1) {
+            const p = CLICK_PENDING[0];
+            showLayerPopup(p.layer, p.feature, p.nombre, p.style,
+              p.joinMap, p.joinMax, p.joinCampo, p.joinTipo, p.joinMetrica, p.latlng);
+          } else {
+            showMultiLayerPopup([...CLICK_PENDING]);
+          }
+          CLICK_PENDING = [];
+        }, 80);
+      });
+      layer.on('mouseover', function() {
+        if (feature.geometry.type !== 'Point')
+          this.setStyle({ weight: sw+1.5, fillOpacity: Math.min(1, opac+0.15) });
+      });
+      layer.on('mouseout', function() { lyr.resetStyle(this); });
+    },
+  }).addTo(MAP);
+
+  MAP_LAYERS[id] = lyr;
+  // Update legend overlay
+  setTimeout(refreshMapLegend, 50);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   POPUP ENRIQUECIDO — capa única
+══════════════════════════════════════════════════════════════════ */
+
+function buildJoinHtml(props, style, joinMap, joinMax, joinCampo, joinTipo, joinMetrica) {
+  if (!style.join_activa || !joinCampo) return '';
+  const FM = new Intl.NumberFormat('es-HN', { minimumFractionDigits: 2 });
+  const FN = new Intl.NumberFormat('es-HN', { minimumFractionDigits: 0 });
+  const joinDb    = style.join_db    || 'carteras';
+  const joinTabla = style.join_tabla || 'cartera_mora';
+  const dbLabel   = joinDb === 'cobros' ? 'Gestión de Cobros' : 'Cartera de Mora';
+  const tablaLabel= JOIN_CONFIG[joinDb]?.tables[joinTabla]?.label || joinTabla;
+
+  const key = String(props[joinCampo]||'').trim().toUpperCase();
+  const val = joinMap[key];
+  const pct = joinMax>0 && val ? Math.round(val/joinMax*100) : 0;
+
+  const metCfg   = JOIN_CONFIG[joinDb]?.tables[joinTabla]?.metrics || [];
+  const metLabel = metCfg.find(m=>m.value===joinMetrica)?.label || joinMetrica;
+  const isCurrency = joinMetrica.includes('monto') || joinMetrica === 'deuda_total';
+  const valFmt   = val ? (isCurrency ? 'L. '+FM.format(val) : FN.format(val)) : '—';
+  const barColor = val ? getDeudaColor(val, joinMax) : 'var(--border)';
+
+  // Detalle ampliado desde la BD
+  let detalle = '';
+  const useDB = joinDb === 'cobros' ? DB_COB : DB;
+  if (val && useDB && key) {
+    try {
+      const safeKey = key.replace(/'/g,"''");
+      if (joinTabla === 'cartera_mora') {
+        const det = useDB.exec(`SELECT COUNT(*) n, COUNT(DISTINCT clave_catastral) pr,
+          COUNT(DISTINCT rmc) co,
+          SUM(CAST(REPLACE(COALESCE(saldo_capital,'0'),',','') AS REAL)) cap,
+          SUM(CAST(REPLACE(COALESCE(intereses,'0'),',','') AS REAL)) inte
+          FROM cartera_mora WHERE ${joinTipo}='${safeKey}'`);
+        if (det.length && det[0].values[0][0]>0) {
+          const [n,pr,co,cap,inte] = det[0].values[0];
+          detalle = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;font-size:10px;margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
+            <span style="color:var(--text-muted)">Registros</span><span style="color:var(--text-primary);font-family:var(--font-mono)">${FN.format(n)}</span>
+            <span style="color:var(--text-muted)">Predios</span><span style="color:var(--teal);font-family:var(--font-mono)">${FN.format(pr)}</span>
+            <span style="color:var(--text-muted)">Contribuyentes</span><span style="color:var(--blue);font-family:var(--font-mono)">${FN.format(co)}</span>
+            <span style="color:var(--text-muted)">Capital</span><span style="color:var(--text-primary);font-family:var(--font-mono)">L. ${FM.format(cap||0)}</span>
+            <span style="color:var(--text-muted)">Intereses</span><span style="color:var(--amber);font-family:var(--font-mono)">L. ${FM.format(inte||0)}</span>
+          </div>`;
+        }
+      } else if (joinTabla === 'gestiones') {
+        const det = useDB.exec(`SELECT COUNT(*) n, SUM(COALESCE(monto_comprometido,0)) mc,
+          COUNT(DISTINCT resultado) res FROM gestiones WHERE ${joinTipo}='${safeKey}'`);
+        if (det.length && det[0].values[0][0]>0) {
+          const [n,mc,res] = det[0].values[0];
+          detalle = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;font-size:10px;margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
+            <span style="color:var(--text-muted)">Gestiones</span><span style="color:var(--text-primary);font-family:var(--font-mono)">${FN.format(n)}</span>
+            <span style="color:var(--text-muted)">Comprometido</span><span style="color:var(--amber);font-family:var(--font-mono)">L. ${FM.format(mc||0)}</span>
+            <span style="color:var(--text-muted)">Resultados distintos</span><span style="color:var(--blue);font-family:var(--font-mono)">${FN.format(res)}</span>
+          </div>`;
+        }
+      } else if (joinTabla === 'acuerdos_pago') {
+        const det = useDB.exec(`SELECT COUNT(*) n, SUM(COALESCE(monto_total,0)) mt,
+          COUNT(DISTINCT estado) est FROM acuerdos_pago WHERE ${joinTipo}='${safeKey}'`);
+        if (det.length && det[0].values[0][0]>0) {
+          const [n,mt,est] = det[0].values[0];
+          detalle = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;font-size:10px;margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
+            <span style="color:var(--text-muted)">Acuerdos</span><span style="color:var(--text-primary);font-family:var(--font-mono)">${FN.format(n)}</span>
+            <span style="color:var(--text-muted)">Monto total</span><span style="color:var(--amber);font-family:var(--font-mono)">L. ${FM.format(mt||0)}</span>
+            <span style="color:var(--text-muted)">Estados distintos</span><span style="color:var(--blue);font-family:var(--font-mono)">${FN.format(est)}</span>
+          </div>`;
+        }
+      }
+    } catch(e) { console.warn('detalle error', e); }
+  }
+
+  return `<div style="margin-top:8px;padding:8px;background:var(--bg-elevated);border-radius:6px;border:1px solid var(--border)">
+    <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">
+      📊 ${dbLabel} · ${tablaLabel}</div>
+    <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px">${metLabel}</div>
+    <div style="font-size:15px;font-weight:800;color:${barColor};font-family:var(--font-display)">${valFmt}</div>
+    <div style="margin-top:4px;height:4px;background:var(--border);border-radius:2px">
+      <div style="height:4px;width:${pct}%;background:${barColor};border-radius:2px"></div>
+    </div>
+    <div style="font-size:9px;color:var(--text-muted);margin-top:2px">${pct}% del máximo · llave: ${key}</div>
+    ${detalle}
+  </div>`;
+}
+
+function buildPropTable(props) {
+  return Object.entries(props)
+    .filter(([k]) => k!==null && k!==undefined)
+    .map(([k,v]) => `<tr>
+      <td style="color:var(--text-secondary);padding:2px 8px 2px 0;font-size:10px;white-space:nowrap;vertical-align:top">${k}</td>
+      <td style="color:var(--text-primary);font-size:10px;font-family:var(--font-mono);word-break:break-word">${v??'—'}</td>
+    </tr>`).join('');
+}
+
+function showLayerPopup(layer, feature, nombre, style, joinMap, joinMax, joinCampo, joinTipo, joinMetrica, latlng) {
+  const props    = feature.properties || {};
+  const propRows = buildPropTable(props);
+  const joinHtml = buildJoinHtml(props, style, joinMap, joinMax, joinCampo, joinTipo, joinMetrica);
+
+  const html = `<div style="font-family:var(--font-body);min-width:200px;max-width:300px">
+    <div style="font-family:var(--font-display);font-size:14px;font-weight:800;color:var(--amber);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)">${nombre}</div>
+    <div style="max-height:160px;overflow-y:auto">
+      <table style="width:100%;border-collapse:collapse">${propRows}</table>
+    </div>
+    ${joinHtml}
+  </div>`;
+
+  layer.bindPopup(html, { maxWidth:340, className:'geo-popup' }).openPopup();
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   POPUP MULTI-CAPA — árbol acordeón
+══════════════════════════════════════════════════════════════════ */
+
+function showMultiLayerPopup(items) {
+  if (!items.length) return;
+  const target = items[0].layer;
+  const latlng = items[0].latlng;
+
+  // Build one accordion section per layer
+  const sections = items.map((p, i) => {
+    const props    = p.feature.properties || {};
+    const propRows = buildPropTable(props);
+    const joinHtml = buildJoinHtml(props, p.style, p.joinMap, p.joinMax,
+                                   p.joinCampo, p.joinTipo, p.joinMetrica);
+    const uid = `mlp-${i}`;
+    return `
+      <div style="border:1px solid var(--border);border-radius:6px;margin-bottom:6px;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg-elevated);
+             cursor:pointer;user-select:none" onclick="
+               const b=document.getElementById('${uid}');
+               const arr=document.getElementById('${uid}-arr');
+               const open=b.style.display!=='none';
+               b.style.display=open?'none':'block';
+               arr.textContent=open?'▶':'▼';">
+          <span id="${uid}-arr" style="font-size:9px;color:var(--text-muted)">▼</span>
+          <span style="font-family:var(--font-display);font-size:12px;font-weight:700;color:var(--amber);flex:1">${p.nombre}</span>
+          <span style="font-size:9px;color:var(--text-muted)">${Object.keys(props).length} campos</span>
+        </div>
+        <div id="${uid}" style="padding:8px 10px">
+          <div style="max-height:120px;overflow-y:auto;margin-bottom:4px">
+            <table style="width:100%;border-collapse:collapse">${propRows}</table>
+          </div>
+          ${joinHtml}
+        </div>
+      </div>`;
+  });
+
+  const html = `<div style="font-family:var(--font-body);min-width:240px;max-width:340px">
+    <div style="font-family:var(--font-display);font-size:13px;font-weight:800;
+         color:var(--text-primary);margin-bottom:10px;padding-bottom:6px;
+         border-bottom:1px solid var(--border)">
+      📍 ${items.length} capas en este punto
+    </div>
+    ${sections.join('')}
+  </div>`;
+
+  // Open on the topmost layer's position
+  L.popup({ maxWidth:360, maxHeight:500, className:'geo-popup' })
+   .setLatLng(latlng)
+   .setContent(html)
+   .openOn(MAP);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   cancelLayer
+══════════════════════════════════════════════════════════════════ */
 
 function cancelLayer() {
   PENDING_GEOJSON = null;
-  document.getElementById('layer-form').style.display = 'none';
+  const form = document.getElementById('layer-form');
+  form.style.display = 'none';
+  delete form.dataset.editId;
   document.getElementById('layer-preview').textContent = '';
   document.getElementById('shp-input').value = '';
+  document.getElementById('lf-join-db').value = '';
+  document.getElementById('lf-join-tabla-wrap').style.display = 'none';
+  document.getElementById('lf-join-keys-wrap').style.display = 'none';
 }
 
-/* ── Render saved layers on map ─────────────────────────────────── */
-function loadSavedLayers() {
-  if (!DB_GEO) return;
-  const rows = DB_GEO.exec("SELECT id_capa,nombre,tipo_geometria,color,opacidad,visible,geojson,num_features,bbox_minx,bbox_miny,bbox_maxx,bbox_maxy FROM capas_geo ORDER BY orden,id_capa");
-  if (!rows.length) return;
-  rows[0].values.forEach(r => {
-    const [id, nombre, tipo, color, opac, visible, gjStr, nf, mnx, mny, mxx, mxy] = r;
-    if (visible) {
-      try {
-        const gj = JSON.parse(gjStr);
-        addGeoJSONToMap(gj, nombre, color, opac, id);
-      } catch(e) { console.warn('Error parsing layer', id, e); }
+/* ══════════════════════════════════════════════════════════════════
+   saveLayer — INSERT o UPDATE según editId
+══════════════════════════════════════════════════════════════════ */
+
+function saveLayer() {
+  if (!PENDING_GEOJSON) { toast('Primero cargue un archivo ZIP con Shapefile.', 'error'); return; }
+
+  const nombre      = document.getElementById('lf-nombre').value.trim()  || 'Nueva capa';
+  const desc        = document.getElementById('lf-desc').value.trim();
+  const color       = document.getElementById('lf-color').value;
+  const opac        = parseFloat(document.getElementById('lf-opacidad').value);
+  const strokeColor = document.getElementById('lf-stroke-color').value;
+  const strokeWidth = parseFloat(document.getElementById('lf-stroke-width').value);
+  const strokeStyle = document.getElementById('lf-stroke-style').value;
+  const pointSymbol = document.getElementById('lf-point-symbol').value;
+  const pointSize   = parseFloat(document.getElementById('lf-point-size').value);
+  const joinDb      = document.getElementById('lf-join-db').value;
+  const joinTabla   = document.getElementById('lf-join-tabla')?.value || 'cartera_mora';
+  const joinCampo   = document.getElementById('lf-join-campo').value;
+  const joinTipo    = document.getElementById('lf-join-tipo').value;
+  const joinMetrica = document.getElementById('lf-join-metrica').value;
+  const joinActiva  = joinDb && joinCampo ? 1 : 0;
+
+  const gj       = PENDING_GEOJSON;
+  const features = gj.features || [];
+  const geomType = features[0]?.geometry?.type || 'Unknown';
+  const gjStr    = JSON.stringify(gj);
+
+  if (!DB_GEO) {
+    DB_GEO = new (window._SQL).Database();
+    DB_GEO.run(GEO_SCHEMA_V2);
+  }
+  migrateGeoSchema();
+
+  // ── Color classification ───────────────────────────────────────
+  const colorMode    = document.getElementById('lf-color-mode').value || 'solid';
+  const colorCampo   = document.getElementById('lf-color-campo')?.value || '';
+  const colorPalette = document.getElementById('lf-color-palette')?.value || '';
+  let   colorBreaks  = null, colorMap = null;
+
+  if (colorMode !== 'solid' && colorCampo && PENDING_GEOJSON) {
+    if (colorMode === 'categorical') {
+      const analysis = analyzeField(PENDING_GEOJSON, colorCampo);
+      if (analysis && analysis.uniques) {
+        const pal = CAT_PALETTES[colorPalette] || CAT_PALETTES['Cartografía'];
+        const cmap = {};
+        analysis.uniques.forEach((v, i) => { cmap[v] = pal[i % pal.length]; });
+        colorMap = JSON.stringify(cmap);
+      }
+    } else {
+      const breaksEl = document.getElementById('lf-breaks-table');
+      const rawBreaks = breaksEl?.dataset.breaks;
+      if (rawBreaks) {
+        colorBreaks = rawBreaks;
+      } else {
+        const k      = parseInt(document.getElementById('lf-num-k')?.value) || 5;
+        const method = document.getElementById('lf-num-method')?.value || 'quantile';
+        const raw    = computeBreaks(PENDING_GEOJSON, colorCampo, k, method);
+        const colored = assignSeqColors(raw, colorPalette);
+        colorBreaks = JSON.stringify(colored);
+      }
     }
-  });
+  }
+
+  const style = { color, opacidad:opac, stroke_color:strokeColor, stroke_width:strokeWidth,
+                  stroke_style:strokeStyle, point_symbol:pointSymbol, point_size:pointSize,
+                  join_campo:joinCampo||null, join_tipo:joinTipo, join_metrica:joinMetrica,
+                  join_activa:joinActiva, join_db:joinDb||'carteras', join_tabla:joinTabla,
+                  color_mode:colorMode, color_campo:colorCampo||null,
+                  color_palette:colorPalette||null, color_breaks:colorBreaks,
+                  color_map:colorMap };
+
+  const editId = document.getElementById('layer-form').dataset.editId;
+
+  if (editId) {
+    // ── UPDATE existing layer ──────────────────────────────────
+    DB_GEO.run(`UPDATE capas_geo SET
+      nombre=?,descripcion=?,color=?,opacidad=?,
+      stroke_color=?,stroke_width=?,stroke_style=?,point_symbol=?,point_size=?,
+      join_campo=?,join_tipo=?,join_metrica=?,join_activa=?,join_db=?,join_tabla=?,
+      color_mode=?,color_campo=?,color_palette=?,color_breaks=?,color_map=?
+      WHERE id_capa=?`,
+      [nombre,desc,color,opac,strokeColor,strokeWidth,strokeStyle,pointSymbol,pointSize,
+       joinCampo||null,joinTipo,joinMetrica,joinActiva,joinDb||'carteras',joinTabla,
+       colorMode||'solid',colorCampo||null,colorPalette||null,colorBreaks,colorMap,
+       parseInt(editId)]);
+    addGeoJSONToMap(gj, nombre, style, parseInt(editId));
+    toast(`Capa "${nombre}" actualizada`, 'success');
+  } else {
+    // ── INSERT new layer ───────────────────────────────────────
+    let minX=180,minY=90,maxX=-180,maxY=-90;
+    features.forEach(f => {
+      getAllCoords(f.geometry).forEach(([lng,lat]) => {
+        if(lng<minX)minX=lng; if(lng>maxX)maxX=lng;
+        if(lat<minY)minY=lat; if(lat>maxY)maxY=lat;
+      });
+    });
+    DB_GEO.run(`INSERT INTO capas_geo
+      (nombre,descripcion,tipo_geometria,color,opacidad,
+       stroke_color,stroke_width,stroke_style,point_symbol,point_size,
+       geojson,archivo_origen,num_features,
+       bbox_minx,bbox_miny,bbox_maxx,bbox_maxy,
+       join_campo,join_tipo,join_metrica,join_activa,join_db,join_tabla,
+       color_mode,color_campo,color_palette,color_breaks,color_map)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [nombre,desc,geomType,color,opac,
+       strokeColor,strokeWidth,strokeStyle,pointSymbol,pointSize,
+       gjStr,PENDING_FILENAME,features.length,
+       minX,minY,maxX,maxY,
+       joinCampo||null,joinTipo,joinMetrica,joinActiva,joinDb||'carteras',joinTabla,
+       colorMode||'solid',colorCampo||null,colorPalette||null,colorBreaks,colorMap]);
+    const newId = DB_GEO.exec('SELECT last_insert_rowid()')[0].values[0][0];
+    addGeoJSONToMap(gj, nombre, style, newId);
+    toast(`Capa "${nombre}" guardada · ${features.length} geometrías`, 'success');
+  }
+
+  geoMarkPending();
+  cancelLayer();
   loadGeoLayersList();
 }
 
-function addGeoJSONToMap(gj, nombre, color, opac, id) {
-  if (MAP_LAYERS[id]) { MAP.removeLayer(MAP_LAYERS[id]); }
-  const lyr = L.geoJSON(gj, {
-    style: { color: '#0d1117', weight: 1, fillColor: color, fillOpacity: opac },
-    pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: 5, fillColor: color, color: '#fff', weight: 1, fillOpacity: opac }),
-    onEachFeature: (f, layer) => {
-      const props = f.properties || {};
-      const propHtml = Object.entries(props).slice(0, 6)
-        .map(([k,v]) => `<tr><td style="color:#8b949e;padding-right:8px;font-size:10px">${k}</td><td style="color:#e6edf3;font-size:10px">${v}</td></tr>`).join('');
-      layer.bindPopup(`<div style="font-family:'Barlow Condensed',sans-serif;"><div style="font-size:13px;font-weight:700;color:#f0a500;margin-bottom:6px;">${nombre}</div><table>${propHtml}</table></div>`);
-    }
-  }).addTo(MAP);
-  MAP_LAYERS[id] = lyr;
-}
-
-/* ── Layers list in geo panel ───────────────────────────────────── */
-function loadGeoLayersList() {
-  const container = document.getElementById('geo-layers-list');
-  const sidebar   = document.getElementById('layers-list');
-
-  if (!DB_GEO) {
-    container.innerHTML = '<div style="font-size:11px;color:var(--text-muted);">Base de datos no cargada.</div>';
-    return;
-  }
-
-  const rows = DB_GEO.exec("SELECT id_capa,nombre,tipo_geometria,color,opacidad,visible,num_features FROM capas_geo ORDER BY orden,id_capa");
-
-  if (!rows.length || !rows[0].values.length) {
-    container.innerHTML = '<div style="font-size:11px;color:var(--text-muted);">No hay capas guardadas aún.</div>';
-    sidebar.innerHTML   = '<div style="font-size:11px;color:var(--text-muted);">Sin capas. Use el botón + para cargar un ZIP con Shapefile.</div>';
-    return;
-  }
-
-  const makeItem = (r, inPanel) => {
-    const [id, nombre, tipo, color, opac, visible, nf] = r;
-    return `
-      <div class="layer-item" id="li-${id}-${inPanel?'p':'s'}">
-        <div class="layer-swatch" style="background:${color}"></div>
-        <div class="layer-info">
-          <div class="layer-name">${nombre}</div>
-          <div class="layer-meta">${tipo || '?'} · ${nf} geometrías</div>
-        </div>
-        <div class="layer-controls">
-          <button class="btn-icon" title="${visible?'Ocultar':'Mostrar'}" onclick="toggleLayer(${id})">${visible?'👁':'👁️‍🗨️'}</button>
-          ${inPanel ? `<button class="btn-icon" style="color:var(--red)" title="Eliminar" onclick="deleteLayer(${id})">&#x2715;</button>` : ''}
-        </div>
-      </div>`;
-  };
-
-  container.innerHTML = rows[0].values.map(r => makeItem(r, true)).join('');
-  sidebar.innerHTML   = rows[0].values.map(r => makeItem(r, false)).join('');
-}
+/* ══════════════════════════════════════════════════════════════════
+   toggleLayer — actualizado para join_db y join_tabla
+══════════════════════════════════════════════════════════════════ */
 
 function toggleLayer(id) {
   if (!DB_GEO) return;
   DB_GEO.run("UPDATE capas_geo SET visible = CASE WHEN visible=1 THEN 0 ELSE 1 END WHERE id_capa=?", [id]);
   const vis = DB_GEO.exec("SELECT visible FROM capas_geo WHERE id_capa=?", [id])[0].values[0][0];
   if (vis) {
-    const gjStr = DB_GEO.exec("SELECT geojson,nombre,color,opacidad FROM capas_geo WHERE id_capa=?", [id])[0].values[0];
-    addGeoJSONToMap(JSON.parse(gjStr[0]), gjStr[1], gjStr[2], gjStr[3], id);
+    const r = DB_GEO.exec(`SELECT geojson,nombre,color,opacidad,stroke_color,stroke_width,
+      stroke_style,point_symbol,point_size,join_campo,join_tipo,join_metrica,join_activa,
+      join_db,join_tabla,color_mode,color_campo,color_palette,color_breaks,color_map
+      FROM capas_geo WHERE id_capa=?`, [id])[0].values[0];
+    const [gjStr,nombre,color,opacidad,stroke_color,stroke_width,stroke_style,
+           point_symbol,point_size,join_campo,join_tipo,join_metrica,join_activa,
+           join_db,join_tabla,color_mode,color_campo,color_palette,color_breaks,color_map] = r;
+    addGeoJSONToMap(JSON.parse(gjStr), nombre,
+      {color,opacidad,stroke_color,stroke_width,stroke_style,
+       point_symbol,point_size,join_campo,join_tipo,join_metrica,join_activa,
+       join_db:join_db||'carteras',join_tabla:join_tabla||'cartera_mora',
+       color_mode:color_mode||'solid',color_campo,color_palette,color_breaks,color_map}, id);
   } else {
     if (MAP_LAYERS[id]) { MAP.removeLayer(MAP_LAYERS[id]); delete MAP_LAYERS[id]; }
+    delete MAP_LAYER_META[id];
   }
   exportGeoDB();
   loadGeoLayersList();
 }
 
-function deleteLayer(id) {
-  if (!confirm('¿Eliminar esta capa permanentemente?')) return;
-  if (MAP_LAYERS[id]) { MAP.removeLayer(MAP_LAYERS[id]); delete MAP_LAYERS[id]; }
-  DB_GEO.run("DELETE FROM capas_geo WHERE id_capa=?", [id]);
-  exportGeoDB();
-  loadGeoLayersList();
-  toast('Capa eliminada', 'success');
+/* ══════════════════════════════════════════════════════════════════
+   openEditLayer — actualizado para join_db / join_tabla
+══════════════════════════════════════════════════════════════════ */
+
+function openEditLayer(id) {
+  const r = DB_GEO.exec(`SELECT nombre,descripcion,color,opacidad,stroke_color,stroke_width,stroke_style,
+    point_symbol,point_size,join_campo,join_tipo,join_metrica,join_activa,join_db,join_tabla,geojson,
+    color_mode,color_campo,color_palette,color_breaks,color_map
+    FROM capas_geo WHERE id_capa=?`, [id])[0].values[0];
+  const [nombre,desc,color,opacidad,stroke_color,stroke_width,stroke_style,
+         point_symbol,point_size,join_campo,join_tipo,join_metrica,join_activa,
+         join_db,join_tabla,gjStr] = r;
+  // r[16..20] = color_mode, color_campo, color_palette, color_breaks, color_map
+
+  document.getElementById('lf-nombre').value        = nombre;
+  document.getElementById('lf-desc').value          = desc || '';
+  document.getElementById('lf-color').value         = color || '#f0a500';
+  document.getElementById('lf-opacidad').value      = opacidad || 0.6;
+  document.getElementById('lf-opacidad-val').textContent = parseFloat(opacidad||0.6).toFixed(2);
+  document.getElementById('lf-stroke-color').value  = stroke_color || '#ffffff';
+  document.getElementById('lf-stroke-width').value  = stroke_width || 1;
+  document.getElementById('lf-stroke-style').value  = stroke_style || 'solid';
+  document.getElementById('lf-point-symbol').value  = point_symbol || 'circle';
+  document.getElementById('lf-point-size').value    = point_size   || 7;
+
+  // Restore color classification
+  const colorMode_r    = r[16] || 'solid';
+  const colorCampo_r   = r[17] || '';
+  const colorPalette_r = r[18] || '';
+  document.getElementById('lf-color-mode').value  = colorMode_r;
+  onColorModeChange();
+  if (colorMode_r !== 'solid' && colorCampo_r) {
+    populateColorFields(PENDING_GEOJSON);
+    document.getElementById('lf-color-campo').value = colorCampo_r;
+    if (colorPalette_r) document.getElementById('lf-color-palette').value = colorPalette_r;
+    onColorFieldChange();
+  }
+
+  // Restore join cascade
+  PENDING_GEOJSON   = JSON.parse(gjStr);
+  PENDING_FILENAME  = '';
+  populateJoinFields(PENDING_GEOJSON);
+
+  if (join_db) {
+    document.getElementById('lf-join-db').value = join_db;
+    onJoinDbChange();
+    if (join_tabla) {
+      document.getElementById('lf-join-tabla').value = join_tabla;
+      onJoinTablaChange();
+    }
+  }
+  if (join_campo) document.getElementById('lf-join-campo').value = join_campo;
+  if (join_tipo)  document.getElementById('lf-join-tipo').value  = join_tipo;
+  if (join_metrica) document.getElementById('lf-join-metrica').value = join_metrica;
+
+  document.getElementById('layer-form').style.display = 'block';
+  document.getElementById('layer-form').dataset.editId = id;
+  document.getElementById('layer-preview').innerHTML =
+    `<span style="color:var(--blue)">✏️ Editando: ${nombre}</span>`;
 }
 
-/* ── Export geodatos.db (download for persistence) ──────────────── */
-function exportGeoDB() {
+/* ══════════════════════════════════════════════════════════════════
+   populateJoinFields — detecta campos del GeoJSON
+══════════════════════════════════════════════════════════════════ */
+
+function populateJoinFields(gj) {
+  const sel = document.getElementById('lf-join-campo');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Seleccione campo —</option>';
+  if (!gj || !gj.features || !gj.features[0]) return;
+  const props = gj.features[0].properties || {};
+  Object.keys(props).forEach(k => {
+    const opt = document.createElement('option');
+    opt.value = k; opt.textContent = k;
+    sel.appendChild(opt);
+  });
+}
+
+
+
+/* ══════════════════════════════════════════════════════════════════
+   exportGeoDB — sin cambios
+══════════════════════════════════════════════════════════════════ */
+
+function geoMarkPending() {
+  GEO_PENDING++;
+  updatePendingBadge('geo');
+}
+
+function geoCommitDB() {
   if (!DB_GEO) return;
-  // Download updated DB so user can replace the file for persistence
+  if (GEO_PENDING === 0) { toast('No hay cambios en capas pendientes', 'success'); return; }
   try {
     const data = DB_GEO.export();
     const blob = new Blob([data], { type: 'application/octet-stream' });
@@ -1862,7 +3735,108 @@ function exportGeoDB() {
     a.download = 'geodatos.db';
     a.click();
     URL.revokeObjectURL(a.href);
+    GEO_PENDING = 0;
+    updatePendingBadge('geo');
+    toast('geodatos.db guardada correctamente', 'success');
   } catch(e) { console.warn('Could not export geodatos.db:', e); }
+}
+
+// Backward-compat
+function exportGeoDB() { geoCommitDB(); }
+
+/* ══════════════════════════════════════════════════════════════════
+   FUNCIONES AUXILIARES GEO (recuperadas)
+══════════════════════════════════════════════════════════════════ */
+
+function getAllCoords(geometry) {
+  if (!geometry) return [];
+  const coords = [];
+  const collect = (c) => {
+    if (!c) return;
+    if (typeof c[0] === 'number') { coords.push(c); return; }
+    c.forEach(collect);
+  };
+  collect(geometry.coordinates);
+  return coords;
+}
+
+function deleteLayer(id) {
+  if (!confirm('¿Eliminar esta capa permanentemente?')) return;
+  if (MAP_LAYERS[id]) { MAP.removeLayer(MAP_LAYERS[id]); delete MAP_LAYERS[id]; }
+  delete MAP_LAYER_META[id];
+  DB_GEO.run("DELETE FROM capas_geo WHERE id_capa=?", [id]);
+  geoMarkPending();
+  loadGeoLayersList();
+  toast('Capa eliminada', 'success');
+}
+
+function loadGeoLayersList() {
+  const container = document.getElementById('geo-layers-list');
+  const sidebar   = document.getElementById('layers-list');
+
+  if (!DB_GEO) {
+    if (container) container.innerHTML = '<div style="font-size:11px;color:var(--text-muted);">Base de datos no cargada.</div>';
+    return;
+  }
+
+  migrateGeoSchema();
+
+  const rows = DB_GEO.exec(
+    `SELECT id_capa,nombre,tipo_geometria,color,opacidad,visible,num_features,
+            stroke_color,stroke_width,stroke_style,point_symbol,point_size,join_activa,join_db,join_tabla
+     FROM capas_geo ORDER BY orden,id_capa`);
+
+  if (!rows.length || !rows[0].values.length) {
+    if (container) container.innerHTML = '<div style="font-size:11px;color:var(--text-muted);">No hay capas guardadas aún.</div>';
+    if (sidebar)   sidebar.innerHTML   = '<div style="font-size:11px;color:var(--text-muted);">Sin capas. Use el botón + para cargar un ZIP.</div>';
+    return;
+  }
+
+  const makeItem = (r, inPanel) => {
+    const [id, nombre, tipo, color, opac, visible, nf,
+           sc, sw, ss, sym, sz, joinActiva, joinDb, joinTabla] = r;
+
+    const previewSvg = (tipo||'').toLowerCase().includes('point')
+      ? `<svg width="14" height="14" viewBox="0 0 14 14">
+           ${sym==='square'   ? `<rect x="2" y="2" width="10" height="10" fill="${color}" stroke="${sc||'#fff'}" stroke-width="1"/>`
+           : sym==='triangle' ? `<polygon points="7,1 13,13 1,13" fill="${color}" stroke="${sc||'#fff'}" stroke-width="1"/>`
+           : sym==='diamond'  ? `<polygon points="7,1 13,7 7,13 1,7" fill="${color}" stroke="${sc||'#fff'}" stroke-width="1"/>`
+           : sym==='star'     ? `<polygon points="7,1 8.5,5.5 13,5.5 9.5,8.5 11,13 7,10 3,13 4.5,8.5 1,5.5 5.5,5.5" fill="${color}" stroke="${sc||'#fff'}" stroke-width="0.7"/>`
+           : `<circle cx="7" cy="7" r="5" fill="${color}" stroke="${sc||'#fff'}" stroke-width="1"/>`}
+         </svg>`
+      : `<svg width="16" height="8" viewBox="0 0 16 8">
+           <line x1="0" y1="4" x2="16" y2="4" stroke="${color}" stroke-width="${Math.min((sw||1)+1,4)}"
+             stroke-dasharray="${ss==='dashed'?'5,3':ss==='dotted'?'2,3':''}"/>
+           <rect x="0" y="0" width="16" height="8" fill="${color}" opacity="${opac||0.5}"/>
+         </svg>`;
+
+    const joinBadge = joinActiva
+      ? (() => {
+          const dbLabel = joinDb === 'cobros' ? '📋' : '🗂';
+          const tbl = joinTabla || 'cartera_mora';
+          return `<span style="font-size:9px;background:var(--amber-glow,rgba(240,165,0,.15));color:var(--amber);padding:1px 5px;border-radius:10px;margin-left:4px">${dbLabel} ${tbl}</span>`;
+        })()
+      : '';
+
+    return `
+      <div class="layer-item" id="li-${id}-${inPanel?'p':'s'}">
+        <div style="display:flex;align-items:center;justify-content:center;width:24px;flex-shrink:0">${previewSvg}</div>
+        <div class="layer-info" style="flex:1;min-width:0;overflow:hidden">
+          <div class="layer-name" style="display:flex;align-items:center;gap:2px;flex-wrap:wrap">
+            ${nombre}${joinBadge}
+          </div>
+          <div class="layer-meta">${tipo||'?'} · ${nf} geom · α${parseFloat(opac||0.6).toFixed(1)}</div>
+        </div>
+        <div class="layer-controls">
+          <button class="btn-icon" title="${visible?'Ocultar':'Mostrar'}" onclick="toggleLayer(${id})">${visible?'👁':'🚫'}</button>
+          ${inPanel ? `<button class="btn-icon" title="Editar estilo" onclick="openEditLayer(${id})" style="color:var(--blue)">✏️</button>` : ''}
+          ${inPanel ? `<button class="btn-icon" title="Eliminar" onclick="deleteLayer(${id})" style="color:var(--red)">✕</button>` : ''}
+        </div>
+      </div>`;
+  };
+
+  if (container) container.innerHTML = rows[0].values.map(r => makeItem(r, true)).join('');
+  if (sidebar)   sidebar.innerHTML   = rows[0].values.map(r => makeItem(r, false)).join('');
 }
 
 /* ── Map loading indicator ──────────────────────────────────────── */
@@ -1889,7 +3863,7 @@ function switchVista(id) {
    VISTA 3 — GESTIÓN DE COBROS
 ══════════════════════════════════════════════════════════════════ */
 
-let DB_COB = null;          // gestion_cobros.db (sql.js instance)
+// DB_COB declarada globalmente arriba
 let COB_ALL = [];           // full filtered rows
 let COB_SORTED = [];        // after search
 let COB_PAGE = 0;
@@ -2300,7 +4274,7 @@ function saveGestion() {
      canal, resultado, motivoId, monto, fcomp, gestor||null, obs||null, now, now]
   );
 
-  cobExportGestionDB();
+  cobMarkPending();
   closeGestionForm();
   cobRefresh();
   toast('Gestión registrada correctamente', 'success');
@@ -2327,7 +4301,7 @@ function saveEstado() {
     'UPDATE gestiones SET estado_seguimiento=?, actualizado_en=? WHERE id_gestion=?',
     [estado, now, COB_EDITING_ID]
   );
-  cobExportGestionDB();
+  cobMarkPending();
   closeEstadoForm();
   cobRefresh();
   toast('Estado actualizado: ' + estado, 'success');
@@ -2363,16 +4337,66 @@ function cobDtag() {
 }
 
 /* ── Persist gestion_cobros.db ──────────────────────────────────── */
-function cobExportGestionDB() {
+// ── Marcar cambio pendiente (sin descargar) ──────────────────────
+function cobMarkPending() {
+  COB_PENDING++;
+  updatePendingBadge('cob');
+}
+
+// ── Commit manual: el usuario decide cuándo descargar ────────────
+function cobCommitDB() {
   if (!DB_COB) return;
+  if (COB_PENDING === 0) { toast('No hay cambios pendientes', 'success'); return; }
   try {
     const data = DB_COB.export();
     const blob = new Blob([data], {type:'application/octet-stream'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = 'gestion_cobros.db';
-    a.click(); URL.revokeObjectURL(a.href);
-  } catch(e) { console.warn('No se pudo exportar gestion_cobros.db:', e); }
+    a.click();
+    URL.revokeObjectURL(a.href);
+    COB_PENDING = 0;
+    updatePendingBadge('cob');
+    toast('gestion_cobros.db guardada correctamente', 'success');
+  } catch(e) {
+    toast('Error al exportar: ' + e.message, 'error');
+  }
+}
+
+// ── Mantiene backward-compat con cualquier llamada directa ───────
+function cobExportGestionDB() { cobCommitDB(); }
+
+// ── Actualizar badge de cambios pendientes en el sidebar ─────────
+function updatePendingBadge(which) {
+  if (which === 'cob') {
+    const badge = document.getElementById('cob-pending-badge');
+    const btn   = document.getElementById('cob-commit-btn');
+    if (!badge || !btn) return;
+    if (COB_PENDING > 0) {
+      badge.textContent = COB_PENDING + (COB_PENDING === 1 ? ' cambio' : ' cambios');
+      badge.style.display = 'inline-block';
+      btn.style.opacity = '1';
+      btn.style.pointerEvents = 'auto';
+    } else {
+      badge.style.display = 'none';
+      btn.style.opacity = '0.4';
+      btn.style.pointerEvents = 'none';
+    }
+  } else if (which === 'geo') {
+    const badge = document.getElementById('geo-pending-badge');
+    const btn   = document.getElementById('geo-commit-btn');
+    if (!badge || !btn) return;
+    if (GEO_PENDING > 0) {
+      badge.textContent = GEO_PENDING + (GEO_PENDING === 1 ? ' cambio' : ' cambios');
+      badge.style.display = 'inline-block';
+      btn.style.opacity = '1';
+      btn.style.pointerEvents = 'auto';
+    } else {
+      badge.style.display = 'none';
+      btn.style.opacity = '0.4';
+      btn.style.pointerEvents = 'none';
+    }
+  }
 }
 
 /* ── Acuerdo form (placeholder) ─────────────────────────────────── */
@@ -2391,6 +4415,647 @@ window.switchVista = function(id) {
   })();
   if (id === 'cobros') setTimeout(() => initCobros(), 50);
 };
+
+
+/* ══════════════════════════════════════════════════════════════
+   SISTEMA DE PERSONALIZACIÓN
+══════════════════════════════════════════════════════════════ */
+
+const PALETTES = [
+  {
+    id: 'noche-azul', name: 'Noche Azul',
+    swatches: ['#0d1117','#161b22','#f0a500','#00b4a6'],
+    vars: {
+      '--bg-base':'#0d1117','--bg-surface':'#161b22','--bg-elevated':'#1c2230','--bg-panel':'#21293a',
+      '--border':'#2a3447','--border-light':'#344057',
+      '--text-primary':'#e6edf3','--text-secondary':'#8b949e','--text-muted':'#485567',
+      '--accent':'#f0a500','--accent-dim':'#c47f00',
+      '--accent-glow':'rgba(240,165,0,.12)','--accent-glow2':'rgba(240,165,0,.06)'
+    }
+  },
+  {
+    id: 'bosque', name: 'Bosque Oscuro',
+    swatches: ['#0a120e','#111c15','#4ade80','#34d399'],
+    vars: {
+      '--bg-base':'#0a120e','--bg-surface':'#111c15','--bg-elevated':'#172414','--bg-panel':'#1d2e1f',
+      '--border':'#253828','--border-light':'#2e4a30',
+      '--text-primary':'#e8f5e9','--text-secondary':'#81c784','--text-muted':'#3a5c3b',
+      '--accent':'#4ade80','--accent-dim':'#22c55e',
+      '--accent-glow':'rgba(74,222,128,.12)','--accent-glow2':'rgba(74,222,128,.06)'
+    }
+  },
+  {
+    id: 'corporativo', name: 'Corporativo',
+    swatches: ['#0f1117','#16191f','#3b82f6','#60a5fa'],
+    vars: {
+      '--bg-base':'#0f1117','--bg-surface':'#16191f','--bg-elevated':'#1b2028','--bg-panel':'#1f2635',
+      '--border':'#2d3748','--border-light':'#3a4a5c',
+      '--text-primary':'#f0f4f8','--text-secondary':'#8899aa','--text-muted':'#445566',
+      '--accent':'#3b82f6','--accent-dim':'#2563eb',
+      '--accent-glow':'rgba(59,130,246,.12)','--accent-glow2':'rgba(59,130,246,.06)'
+    }
+  },
+  {
+    id: 'municipal', name: 'Municipal',
+    swatches: ['#0d1520','#111e2e','#06b6d4','#22d3ee'],
+    vars: {
+      '--bg-base':'#0d1520','--bg-surface':'#111e2e','--bg-elevated':'#162438','--bg-panel':'#1a2a40',
+      '--border':'#1e3050','--border-light':'#254060',
+      '--text-primary':'#e0f7fa','--text-secondary':'#7cb8cc','--text-muted':'#2a4a5a',
+      '--accent':'#06b6d4','--accent-dim':'#0891b2',
+      '--accent-glow':'rgba(6,182,212,.12)','--accent-glow2':'rgba(6,182,212,.06)'
+    }
+  },
+  {
+    id: 'pizarra', name: 'Pizarra',
+    swatches: ['#13111c','#1a1727','#a78bfa','#c4b5fd'],
+    vars: {
+      '--bg-base':'#13111c','--bg-surface':'#1a1727','--bg-elevated':'#201c30','--bg-panel':'#252039',
+      '--border':'#312b4a','--border-light':'#3e365c',
+      '--text-primary':'#ede9fe','--text-secondary':'#9c8ecc','--text-muted':'#4a4060',
+      '--accent':'#a78bfa','--accent-dim':'#7c3aed',
+      '--accent-glow':'rgba(167,139,250,.12)','--accent-glow2':'rgba(167,139,250,.06)'
+    }
+  },
+  {
+    id: 'contraste', name: 'Alto Contraste',
+    swatches: ['#000000','#111111','#facc15','#f87171'],
+    vars: {
+      '--bg-base':'#000000','--bg-surface':'#111111','--bg-elevated':'#1a1a1a','--bg-panel':'#222222',
+      '--border':'#333333','--border-light':'#444444',
+      '--text-primary':'#ffffff','--text-secondary':'#cccccc','--text-muted':'#666666',
+    }
+  },
+  {
+    id: 'aurora', name: 'Aurora',
+    swatches: ['#0a0e1a','#0f1628','#e879f9','#38bdf8'],
+    vars: {
+      '--bg-base':'#0a0e1a','--bg-surface':'#0f1628','--bg-elevated':'#141d35','--bg-panel':'#192240',
+      '--border':'#1e2d50','--border-light':'#253762',
+      '--text-primary':'#f0e8ff','--text-secondary':'#9b8ec4','--text-muted':'#3a3060',
+    }
+  },
+  {
+    id: 'obsidiana', name: 'Obsidiana',
+    swatches: ['#18181b','#27272a','#f97316','#fb923c'],
+    vars: {
+      '--bg-base':'#18181b','--bg-surface':'#27272a','--bg-elevated':'#3f3f46','--bg-panel':'#52525b',
+      '--border':'#3f3f46','--border-light':'#52525b',
+      '--text-primary':'#fafafa','--text-secondary':'#a1a1aa','--text-muted':'#71717a',
+    }
+  },
+  {
+    id: 'dia-claro', name: 'Día Claro',
+    swatches: ['#f8fafc','#f1f5f9','#0ea5e9','#6366f1'],
+    vars: {
+      '--bg-base':'#f8fafc','--bg-surface':'#f1f5f9','--bg-elevated':'#e2e8f0','--bg-panel':'#ffffff',
+      '--border':'#cbd5e1','--border-light':'#e2e8f0',
+      '--text-primary':'#0f172a','--text-secondary':'#475569','--text-muted':'#94a3b8',
+    }
+  },
+  {
+    id: 'papel', name: 'Papel Crema',
+    swatches: ['#faf7f2','#f5f0e8','#92400e','#b45309'],
+    vars: {
+      '--bg-base':'#faf7f2','--bg-surface':'#f5f0e8','--bg-elevated':'#ede8dc','--bg-panel':'#ffffff',
+      '--border':'#d6c9b0','--border-light':'#e8dfc8',
+      '--text-primary':'#1c1410','--text-secondary':'#5c4a32','--text-muted':'#9c836a',
+    }
+  },
+  {
+    id: 'carbon', name: 'Carbón',
+    swatches: ['#1a1a1a','#242424','#6ee7b7','#34d399'],
+    vars: {
+      '--bg-base':'#1a1a1a','--bg-surface':'#242424','--bg-elevated':'#2e2e2e','--bg-panel':'#383838',
+      '--border':'#404040','--border-light':'#4a4a4a',
+      '--text-primary':'#f5f5f5','--text-secondary':'#a8a8a8','--text-muted':'#666666',
+    }
+  },
+  {
+    id: 'marina', name: 'Marina',
+    swatches: ['#0c1830','#112240','#64ffda','#48cae4'],
+    vars: {
+      '--bg-base':'#0c1830','--bg-surface':'#112240','--bg-elevated':'#172f55','--bg-panel':'#1d3a68',
+      '--border':'#1e3a5f','--border-light':'#254a78',
+      '--text-primary':'#ccd6f6','--text-secondary':'#8892b0','--text-muted':'#3a5070',
+    }
+  },
+];
+
+const ACCENT_COLORS = [
+  { name:'Ámbar',   hex:'#f0a500', dim:'#c47f00', glow:'rgba(240,165,0,.12)',  glow2:'rgba(240,165,0,.06)'  },
+  { name:'Teal',    hex:'#00b4a6', dim:'#008f84', glow:'rgba(0,180,166,.12)',   glow2:'rgba(0,180,166,.06)'  },
+  { name:'Azul',    hex:'#4a9eff', dim:'#2563eb', glow:'rgba(74,158,255,.12)',  glow2:'rgba(74,158,255,.06)' },
+  { name:'Verde',   hex:'#22c55e', dim:'#16a34a', glow:'rgba(34,197,94,.12)',   glow2:'rgba(34,197,94,.06)'  },
+  { name:'Rosa',    hex:'#f472b6', dim:'#db2777', glow:'rgba(244,114,182,.12)', glow2:'rgba(244,114,182,.06)'},
+  { name:'Naranja', hex:'#fb923c', dim:'#ea580c', glow:'rgba(251,146,60,.12)',  glow2:'rgba(251,146,60,.06)' },
+  { name:'Violeta', hex:'#a78bfa', dim:'#7c3aed', glow:'rgba(167,139,250,.12)', glow2:'rgba(167,139,250,.06)'},
+  { name:'Cian',    hex:'#06b6d4', dim:'#0891b2', glow:'rgba(6,182,212,.12)',   glow2:'rgba(6,182,212,.06)'  },
+];
+
+const FONTS = [
+  { id:'barlow',    name:'Barlow',      body:"'Barlow',sans-serif",       display:"'Barlow Condensed',sans-serif", preview:'Aa' },
+  { id:'inter',     name:'Inter',       body:"'Inter',system-ui,sans-serif", display:"'Inter',system-ui,sans-serif", preview:'Aa' },
+  { id:'roboto',    name:'Roboto',      body:"'Roboto',sans-serif",        display:"'Roboto Condensed',sans-serif", preview:'Aa' },
+  { id:'opensans',  name:'Open Sans',   body:"'Open Sans',sans-serif",     display:"'Open Sans',sans-serif",        preview:'Aa' },
+  { id:'system',    name:'Sistema',     body:"system-ui,sans-serif",       display:"system-ui,sans-serif",          preview:'Aa' },
+  { id:'lato',      name:'Lato',        body:"'Lato',sans-serif",           display:"'Lato',sans-serif",             preview:'Aa' },
+  { id:'nunito',    name:'Nunito',      body:"'Nunito',sans-serif",         display:"'Nunito',sans-serif",           preview:'Aa' },
+  { id:'poppins',   name:'Poppins',     body:"'Poppins',sans-serif",        display:"'Poppins',sans-serif",          preview:'Aa' },
+  { id:'raleway',   name:'Raleway',     body:"'Raleway',sans-serif",        display:"'Raleway',sans-serif",          preview:'Aa' },
+  { id:'montserrat',name:'Montserrat',  body:"'Montserrat',sans-serif",     display:"'Montserrat',sans-serif",       preview:'Aa' },
+  { id:'sourcesans',name:'Source Sans', body:"'Source Sans 3',sans-serif",  display:"'Source Sans 3',sans-serif",    preview:'Aa' },
+  { id:'ubuntu',    name:'Ubuntu',      body:"'Ubuntu',sans-serif",         display:"'Ubuntu',sans-serif",           preview:'Aa' },
+  { id:'firacode',  name:'Fira Code',   body:"'Fira Code',monospace",       display:"'Fira Code',monospace",         preview:'Aa' },
+  { id:'merriweather', name:'Merriweather', body:"'Merriweather',serif",    display:"'Merriweather',serif",          preview:'Aa' },
+  { id:'playfair',  name:'Playfair',    body:"'Playfair Display',serif",    display:"'Playfair Display',serif",      preview:'Aa' },
+];
+
+let CURRENT_SETTINGS = {
+  palette: 'noche-azul',
+  accent:  '#f0a500',
+  font:    'barlow',
+  fontSize: 14,
+};
+
+
+/* ══════════════════════════════════════════════════════════════════
+   TOGGLE SECTOR LAYER (on/off sin destruir capas SHP)
+══════════════════════════════════════════════════════════════════ */
+
+function toggleSectorLayer(visible) {
+  if (!MAP) return;
+  if (visible) {
+    if (!SECTOR_LAYER) refreshMapData();
+    else SECTOR_LAYER.addTo(MAP);
+  } else {
+    if (SECTOR_LAYER) MAP.removeLayer(SECTOR_LAYER);
+    // Ocultar popup de zona al apagar la capa
+    const popup = document.getElementById('zona-kpi-popup');
+    if (popup) popup.style.display = 'none';
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   CENTROID EDITOR — leer/escribir localStorage
+══════════════════════════════════════════════════════════════════ */
+
+
+/* ══════════════════════════════════════════════════════════════════
+   CENTROID PICK FROM MAP — selección de coordenadas con cursor
+══════════════════════════════════════════════════════════════════ */
+
+let CENTROID_PICK_SECTOR = null;  // sector activo en modo pick
+let CENTROID_PICK_HANDLER = null; // listener Leaflet almacenado
+
+function startCentroidPick(sector) {
+  CENTROID_PICK_SECTOR = sector;
+
+  // 1. Cerrar el drawer de settings primero
+  closeSettings();
+
+  // 2. Asegurar que la vista del mapa esté activa
+  const vistaMap = document.getElementById('vista-mapa');
+  if (!vistaMap || !vistaMap.classList.contains('active')) {
+    switchVista('mapa');
+  }
+
+  // 3. Esperar un frame para que el mapa esté renderizado y listo
+  setTimeout(() => {
+    if (!MAP) {
+      toast('Error: el mapa no está disponible', 'error');
+      CENTROID_PICK_SECTOR = null;
+      return;
+    }
+
+    // Invalidar tamaño por si la vista acaba de activarse
+    MAP.invalidateSize();
+
+    // Mostrar banner de instrucción
+    const banner = document.getElementById('centroid-pick-banner');
+    const label  = document.getElementById('centroid-pick-label');
+    if (banner && label) {
+      label.textContent = `Haga clic para ubicar: "${sector}"`;
+      banner.style.display = 'flex';
+    }
+
+    // Cursor crosshair
+    MAP.getContainer().style.cursor = 'crosshair';
+
+    // Limpiar cualquier listener anterior por si quedó uno huérfano
+    if (CENTROID_PICK_HANDLER) {
+      MAP.off('click', CENTROID_PICK_HANDLER);
+    }
+
+    // Registrar listener de un solo uso
+    CENTROID_PICK_HANDLER = function(e) {
+      const lat = parseFloat(e.latlng.lat.toFixed(5));
+      const lng = parseFloat(e.latlng.lng.toFixed(5));
+      finishCentroidPick(lat, lng);
+    };
+    MAP.once('click', CENTROID_PICK_HANDLER);
+
+  }, 150);
+}
+
+function finishCentroidPick(lat, lng) {
+  const sector = CENTROID_PICK_SECTOR;
+  if (!sector) return;
+
+  // Actualizar centroides
+  if (!SECTOR_CENTROIDS[sector]) SECTOR_CENTROIDS[sector] = [lat, lng];
+  else SECTOR_CENTROIDS[sector] = [lat, lng];
+  saveCentroids();
+
+  // Refrescar capa de mora si está activa
+  const toggle = document.getElementById('toggle-sector-layer');
+  if (toggle && toggle.checked) refreshMapData();
+
+  // Limpiar modo
+  cancelCentroidPick(false);
+
+  // Toast con coordenadas
+  toast(`"${sector}" → ${lat}, ${lng}`, 'success');
+
+  // Reabrir settings con editor actualizado
+  setTimeout(() => {
+    openSettings();
+    // Scroll al editor de centroides
+    setTimeout(() => {
+      const editor = document.getElementById('centroids-editor');
+      if (editor) editor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      renderCentroidsEditor();
+    }, 200);
+  }, 600);
+}
+
+function cancelCentroidPick(showToast = true) {
+  if (MAP) {
+    MAP.getContainer().style.cursor = '';
+    if (CENTROID_PICK_HANDLER) {
+      MAP.off('click', CENTROID_PICK_HANDLER);
+      CENTROID_PICK_HANDLER = null;
+    }
+  }
+  const banner = document.getElementById('centroid-pick-banner');
+  if (banner) banner.style.display = 'none';
+  CENTROID_PICK_SECTOR = null;
+  if (showToast) toast('Selección cancelada', 'success');
+}
+
+function loadCentroids() {
+  try {
+    const saved = localStorage.getItem('cm-centroids');
+    if (saved) {
+      const custom = JSON.parse(saved);
+      // Merge: keep defaults for sectors not in custom
+      SECTOR_CENTROIDS = { ...SECTOR_CENTROIDS_DEFAULT, ...custom };
+    }
+  } catch(e) {}
+}
+
+function saveCentroids() {
+  try {
+    localStorage.setItem('cm-centroids', JSON.stringify(SECTOR_CENTROIDS));
+  } catch(e) {}
+}
+
+function resetCentroids() {
+  if (!confirm('¿Restablecer todas las ubicaciones a los valores predeterminados?')) return;
+  localStorage.removeItem('cm-centroids');
+  SECTOR_CENTROIDS = { ...SECTOR_CENTROIDS_DEFAULT };
+  renderCentroidsEditor();
+  refreshMapData();
+  toast('Ubicaciones restablecidas', 'success');
+}
+
+function renderCentroidsEditor() {
+  const container = document.getElementById('centroids-editor');
+  if (!container) return;
+
+  let sectors = Object.keys(SECTOR_CENTROIDS);
+
+  if (DB) {
+    try {
+      const rows = DB.exec("SELECT DISTINCT sector FROM cartera_mora WHERE sector IS NOT NULL AND sector != '' AND sector NOT LIKE 'ERROR%' ORDER BY sector");
+      if (rows.length) {
+        rows[0].values.forEach(r => {
+          if (!sectors.includes(r[0])) sectors.push(r[0]);
+        });
+      }
+    } catch(e) {}
+  }
+
+  // Generar HTML sin onclick inline — usamos data-sector para evitar problemas de quoting
+  container.innerHTML = sectors.map(sector => {
+    const coord     = SECTOR_CENTROIDS[sector] || [15.5009, -88.0256];
+    const isDefault = JSON.stringify(coord) === JSON.stringify(SECTOR_CENTROIDS_DEFAULT[sector]);
+    const sectorEnc = sector.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+    return `
+      <div style="border-bottom:1px solid var(--border);padding:6px 4px;">
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;">
+          <span style="font-size:10px;font-weight:600;color:var(--text-primary);flex:1;
+                       overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+                title="${sectorEnc}">${sectorEnc}</span>
+          ${isDefault ? '' : '<span style="font-size:9px;background:var(--amber-glow,rgba(240,165,0,.15));color:var(--amber);padding:1px 5px;border-radius:8px;">editado</span>'}
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <div style="flex:1;">
+            <div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">Latitud</div>
+            <input type="number" step="0.0001" value="${coord[0].toFixed(4)}"
+              class="table-search centroid-input"
+              style="width:100%;margin:0;font-size:11px;padding:3px 6px;"
+              data-sector="${sectorEnc}" data-idx="0"
+              onchange="updateCentroid(this.dataset.sector, 0, this.value)">
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">Longitud</div>
+            <input type="number" step="0.0001" value="${coord[1].toFixed(4)}"
+              class="table-search centroid-input"
+              style="width:100%;margin:0;font-size:11px;padding:3px 6px;"
+              data-sector="${sectorEnc}" data-idx="1"
+              onchange="updateCentroid(this.dataset.sector, 1, this.value)">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:3px;margin-top:12px;flex-shrink:0;">
+            <button class="btn-centroid-fly" data-sector="${sectorEnc}"
+              title="Mover mapa a esta ubicación"
+              style="padding:3px 7px;background:none;border:1px solid var(--border);
+                     border-radius:4px;color:var(--text-muted);cursor:pointer;font-size:11px;">
+              🎯
+            </button>
+            <button class="btn-centroid-pick" data-sector="${sectorEnc}"
+              title="Seleccionar ubicación haciendo clic en el mapa"
+              style="padding:3px 7px;background:rgba(240,165,0,.08);
+                     border:1px solid rgba(240,165,0,.3);border-radius:4px;
+                     color:var(--amber);cursor:pointer;font-size:11px;">
+              📍
+            </button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Adjuntar listeners DESPUÉS de setear innerHTML — evita problemas de quoting
+  container.querySelectorAll('.btn-centroid-fly').forEach(btn => {
+    btn.addEventListener('click', () => flyToCentroid(btn.dataset.sector));
+    btn.addEventListener('mouseover', () => btn.style.color = 'var(--amber)');
+    btn.addEventListener('mouseout',  () => btn.style.color = 'var(--text-muted)');
+  });
+  container.querySelectorAll('.btn-centroid-pick').forEach(btn => {
+    btn.addEventListener('click', () => startCentroidPick(btn.dataset.sector));
+    btn.addEventListener('mouseover', () => btn.style.background = 'rgba(240,165,0,.18)');
+    btn.addEventListener('mouseout',  () => btn.style.background = 'rgba(240,165,0,.08)');
+  });
+}
+
+
+function updateCentroid(sector, idx, val) {
+  const v = parseFloat(val);
+  if (!isFinite(v)) return;
+  if (!SECTOR_CENTROIDS[sector]) SECTOR_CENTROIDS[sector] = [15.5009, -88.0256];
+  SECTOR_CENTROIDS[sector] = [...SECTOR_CENTROIDS[sector]];
+  SECTOR_CENTROIDS[sector][idx] = v;
+  saveCentroids();
+  // Re-render map if sector layer is visible
+  const toggle = document.getElementById('toggle-sector-layer');
+  if (toggle && toggle.checked) refreshMapData();
+  // Refresh editor to show/hide "editado" badge
+  renderCentroidsEditor();
+}
+
+function flyToCentroid(sector) {
+  if (!MAP) return;
+  const coord = SECTOR_CENTROIDS[sector];
+  if (coord) MAP.flyTo(coord, 14, { duration: 1.2 });
+  closeSettings();
+}
+
+function loadSettings() {
+  try {
+    const saved = localStorage.getItem('cm-settings');
+    if (saved) CURRENT_SETTINGS = { ...CURRENT_SETTINGS, ...JSON.parse(saved) };
+  } catch(e) {}
+  loadCentroids();
+}
+
+function saveSettings() {
+  try { localStorage.setItem('cm-settings', JSON.stringify(CURRENT_SETTINGS)); } catch(e) {}
+}
+
+function applyPalette(pid, save=true) {
+  const p = PALETTES.find(x => x.id === pid);
+  if (!p) return;
+  const root = document.documentElement.style;
+  // Write bg/border/text vars (skip --accent*, handled by applyAccent)
+  Object.entries(p.vars).forEach(([k,v]) => {
+    if (!k.startsWith('--accent')) root.setProperty(k, v);
+  });
+  // Apply current accent color on top
+  applyAccent(CURRENT_SETTINGS.accent, false);
+  if (save) { CURRENT_SETTINGS.palette = pid; saveSettings(); }
+  document.querySelectorAll('.palette-card').forEach(c =>
+    c.classList.toggle('active', c.dataset.pid === pid));
+}
+
+function applyAccent(hex, save=true) {
+  const a = ACCENT_COLORS.find(x => x.hex === hex) || { hex, dim: hex, glow:`rgba(0,0,0,.1)`, glow2:`rgba(0,0,0,.05)` };
+  const root = document.documentElement.style;
+  root.setProperty('--amber',      a.hex);
+  root.setProperty('--amber-dim',  a.dim);
+  root.setProperty('--amber-glow', a.glow);
+  root.setProperty('--amber-glow2',a.glow2);
+  // Also update teal if matching
+  if (save) { CURRENT_SETTINGS.accent = hex; saveSettings(); }
+  document.querySelectorAll('.accent-dot').forEach(d =>
+    d.classList.toggle('active', d.dataset.hex === hex));
+  // Refresh charts to pick up new colors
+  if (typeof applyFilters === 'function' && DB) setTimeout(applyFilters, 50);
+}
+
+function applyFont(fid, save=true) {
+  const f = FONTS.find(x => x.id === fid);
+  if (!f) return;
+  const root = document.documentElement.style;
+  root.setProperty('--font-body',    f.body);
+  root.setProperty('--font-display', f.display);
+  // Load font if needed
+  const gfontMap = {
+    inter:'Inter:wght@400;500;600', roboto:'Roboto:wght@400;500;700',
+    opensans:'Open+Sans:wght@400;600', lato:'Lato:wght@400;700',
+    nunito:'Nunito:wght@400;600;700', poppins:'Poppins:wght@400;500;600',
+    raleway:'Raleway:wght@400;600;700', montserrat:'Montserrat:wght@400;500;600',
+    sourcesans:'Source+Sans+3:wght@400;600', ubuntu:'Ubuntu:wght@400;500;700',
+    firacode:'Fira+Code:wght@400;500', merriweather:'Merriweather:wght@400;700',
+    playfair:'Playfair+Display:wght@400;700'
+  };
+  if (gfontMap[fid]) {
+    const names = gfontMap;
+    const linkId = 'gfont-'+fid;
+    if (!document.getElementById(linkId)) {
+      const link = document.createElement('link');
+      link.id   = linkId;
+      link.rel  = 'stylesheet';
+      link.href = `https://fonts.googleapis.com/css2?family=${names[fid]}&display=swap`;
+      document.head.appendChild(link);
+    }
+  }
+  if (save) { CURRENT_SETTINGS.font = fid; saveSettings(); }
+  document.querySelectorAll('.font-card').forEach(c =>
+    c.classList.toggle('active', c.dataset.fid === fid));
+  document.querySelectorAll('.font-card-preview').forEach(c => {
+    const fc = FONTS.find(x => x.id === c.closest('.font-card').dataset.fid);
+    if (fc) c.style.fontFamily = fc.body;
+  });
+}
+
+function applyFontSize(sz, save=true) {
+  document.documentElement.style.fontSize = sz + 'px';
+  document.getElementById('font-size-label').textContent = sz + 'px';
+  if (save) { CURRENT_SETTINGS.fontSize = parseInt(sz); saveSettings(); }
+}
+
+function resetSettings() {
+  CURRENT_SETTINGS = { palette:'noche-azul', accent:'#f0a500', font:'barlow', fontSize:14 };
+  saveSettings();
+  applyPalette('noche-azul', false);
+  applyAccent('#f0a500', false);
+  applyFont('barlow', false);
+  applyFontSize(14, false);
+  renderSettingsUI();
+}
+
+function renderSettingsUI() {
+  // Palettes
+  const pg = document.getElementById('palette-grid');
+  if (pg) {
+    pg.innerHTML = PALETTES.map(p => `
+      <div class="palette-card ${p.id === CURRENT_SETTINGS.palette ? 'active' : ''}" 
+           data-pid="${p.id}" onclick="applyPalette('${p.id}')">
+        <div class="palette-swatches">
+          ${p.swatches.map(s => `<div class="palette-swatch" style="background:${s}"></div>`).join('')}
+        </div>
+        <div class="palette-name">${p.name}</div>
+      </div>`).join('');
+  }
+
+  // Accent colors
+  const as = document.getElementById('accent-swatches');
+  if (as) {
+    as.innerHTML = ACCENT_COLORS.map(a => `
+      <div class="accent-dot ${a.hex === CURRENT_SETTINGS.accent ? 'active' : ''}"
+           data-hex="${a.hex}" title="${a.name}"
+           style="background:${a.hex}" onclick="applyAccent('${a.hex}')"></div>`).join('');
+  }
+
+  // Fonts
+  const fg = document.getElementById('font-grid');
+  if (fg) {
+    fg.innerHTML = FONTS.map(f => `
+      <div class="font-card ${f.id === CURRENT_SETTINGS.font ? 'active' : ''}"
+           data-fid="${f.id}" onclick="applyFont('${f.id}')">
+        <div class="font-card-preview" style="font-family:${f.body}">${f.preview} Abc</div>
+        <div class="font-card-name">${f.name}</div>
+      </div>`).join('');
+  }
+
+  // Font size slider
+  const sl = document.getElementById('font-size-slider');
+  if (sl) {
+    sl.value = CURRENT_SETTINGS.fontSize;
+    document.getElementById('font-size-label').textContent = CURRENT_SETTINGS.fontSize + 'px';
+  }
+
+  // Sync map toggle state
+  const toggleEl = document.getElementById('toggle-sector-layer');
+  if (toggleEl) toggleEl.checked = SECTOR_LAYER ? MAP.hasLayer(SECTOR_LAYER) : true;
+
+  // Render centroids editor
+  renderCentroidsEditor();
+}
+
+function openSettings() {
+  renderSettingsUI();
+  document.getElementById('settings-drawer').classList.add('open');
+  document.getElementById('settings-overlay').classList.add('open');
+}
+
+function closeSettings() {
+  document.getElementById('settings-drawer').classList.remove('open');
+  document.getElementById('settings-overlay').classList.remove('open');
+}
+
+// ── DB Reload desde settings ────────────────────────────────────
+async function reloadDB(which, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const lblId = { carteras:'lbl-reload-carteras', cobros:'lbl-reload-cobros', geo:'lbl-reload-geo' }[which];
+  const lbl = document.getElementById(lblId);
+  lbl.textContent = '⏳ Cargando...';
+  lbl.classList.remove('loaded');
+
+  try {
+    const buf = await file.arrayBuffer();
+    const arr = new Uint8Array(buf);
+    const SQL = window._SQL;
+
+    if (which === 'carteras') {
+      DB = new SQL.Database(arr);
+      const r = DB.exec("SELECT COUNT(*) FROM cartera_mora");
+      FULL_TOTAL = r[0].values[0][0];
+      populateFilters();
+      await applyFilters();
+      setStatus('ok', `BD activa — ${FMT.format(FULL_TOTAL)} registros`);
+      toast(`carteras.db actualizada · ${FMT.format(FULL_TOTAL)} registros`, 'success');
+    } else if (which === 'cobros') {
+      DB_COB = new SQL.Database(arr);
+      if (typeof cobRefresh === 'function') cobRefresh();
+      toast('gestion_cobros.db actualizada', 'success');
+    } else if (which === 'geo') {
+      DB_GEO = new SQL.Database(arr);
+      migrateGeoSchema();   // migrar esquema antes de consultar
+      // Limpiar capas del mapa y re-renderizar desde la BD recargada
+      Object.keys(MAP_LAYERS).forEach(id => {
+        if (MAP && MAP_LAYERS[id]) { MAP.removeLayer(MAP_LAYERS[id]); delete MAP_LAYERS[id]; }
+      });
+      if (MAP) loadSavedLayers();
+      if (typeof loadGeoLayersList === 'function') loadGeoLayersList();
+      toast('geodatos.db actualizada', 'success');
+    }
+
+    lbl.textContent = '✓ ' + file.name.slice(0,18);
+    lbl.classList.add('loaded');
+  } catch(e) {
+    lbl.textContent = '⚠ Error';
+    console.error('DB reload error:', e);
+    toast('Error al cargar: ' + e.message, 'error');
+  }
+}
+
+// ── Aplicar ajustes al iniciar ──────────────────────────────────
+function initSettings() {
+  loadSettings();
+  applyPalette(CURRENT_SETTINGS.palette, false);
+  applyAccent(CURRENT_SETTINGS.accent, false);
+  applyFont(CURRENT_SETTINGS.font, false);
+  applyFontSize(CURRENT_SETTINGS.fontSize, false);
+}
+
+// Advertencia al cerrar con cambios sin guardar
+window.addEventListener('beforeunload', (e) => {
+  if (COB_PENDING > 0 || GEO_PENDING > 0) {
+    const msg = `Tienes cambios sin guardar: ` +
+      (COB_PENDING > 0 ? `${COB_PENDING} gestión(es) de cobro` : '') +
+      (COB_PENDING > 0 && GEO_PENDING > 0 ? ' y ' : '') +
+      (GEO_PENDING > 0 ? `${GEO_PENDING} capa(s) geográfica(s)` : '') +
+      '. ¿Seguro que deseas salir?';
+    e.preventDefault();
+    e.returnValue = msg;
+    return msg;
+  }
+});
+
+// Llamar al cargar
+document.addEventListener('DOMContentLoaded', initSettings);
 
 </script>
 </body>
